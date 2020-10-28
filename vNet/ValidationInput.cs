@@ -11,6 +11,10 @@ namespace vNet
     {
         public dynamic[] Data { get; private set; }
 
+        public ValidationInput()
+        {
+
+        }
         public ValidationInput(float[] data)
         {
 

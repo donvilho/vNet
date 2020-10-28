@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace vNet
 {
+
     class Neuron
     {
         private float Bias;
@@ -23,19 +25,21 @@ namespace vNet
             BiasCache = 0;
         }
 
-        public float Activate(float[] img)
+        public float forwardCalc(float[] input)
         {
             float Output = Bias;
 
-            if(img.Length == Weights.Length)
+            if(input.Length == Weights.Length)
             {
                 for(int i = 0; i < Weights.Length; i++)
                 {
-                    Output += img[i] * Weights[i];
+                    Output += input[i] * Weights[i];
                 }
             }
             return Output;
         }
+
+
 
         public float Backpropagate(float[] input, float error)
         {

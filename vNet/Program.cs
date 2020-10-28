@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Numerics;
@@ -18,29 +19,42 @@ namespace vNet
     class Program
     {
         static void Main(string[] args)
-        {
-            var epoch = 100;
-            var learningRate = 1;
-            var datasetPath = @"C:\Users\ville\Downloads\mnist_png.tar\linear";
+       {
 
-            var layers = new Layer[]
-            {
-                new Layer(10,Activation.Sigmoid),
-                new Layer(200,Activation.None)
-            };
+            //ParallelTest.PTest();
 
-            var model = new Model(Type.Lin_Reg, CostFunction.Msqrt, datasetPath, epoch, learningRate);
+            //var linearDataset = new Dataset(Utils.CSVtoArray(@"C:\Users\ville\Downloads\lohi.csv").ToArray());
+
+            //var test = new DatasetArray(@"C:\Users\ville\Downloads\mnist_png.tar\linear");
+
+            //var dataset = Utils.DatasetCreator(@"C:\Users\ville\Downloads\mnist_png.tar\linear");
+
+            var logReg = new LogisticRegression(200, .01f, 32);
+
+            
+
+            logReg.TrainModel(@"C:\Users\ville\Downloads\mnist_png.tar\linear");
+
+            //var linearReg = new LinearRegression(linearDataset, 10, 0.01f);
+
+            //linearReg.TrainModel();
 
 
-            model.TrainNetwork(epoch:10 , learningRate:.0001);
+            
 
+            //var structure = new List<(int, Activator)> { (1,Activator.None) };
 
-            Console.ReadKey();
+            //var net = new NetworkTrainer(dataset.InputLenght, structure);
+         
+
+            //net.Train(dataset, learningRate: .001f, epoch:1000, costFunction: CostFunction.MSE, miniBatch: 0);
+
+           
 
         }
 
 
-       
 
+        
     }
 }
