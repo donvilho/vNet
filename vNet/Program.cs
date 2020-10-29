@@ -21,39 +21,19 @@ namespace vNet
         static void Main(string[] args)
        {
 
+            var thre = new ThreadLocal<TT>(() => new TT(),true);
 
-            // Source must be array or IList.
-            var source = Enumerable.Range(0, 100000).ToArray();
-
-            // Partition the entire source array.
-            var rangePartitioner = Partitioner.Create(0, source.Length);
-
-            double[] results = new double[source.Length];
-
-            // Loop over the partitions in parallel.
-            Parallel.ForEach(rangePartitioner, (range, loopState) =>
+            Parallel.For(0, 10, i =>
             {
-                // Loop over each range element without a delegate invocation.
-                for (int i = range.Item1; i < range.Item2; i++)
-                {
-                    results[i] = source[i] * Math.PI;
-                }
+
+                thre.Value.print(i);
             });
 
-            Console.WriteLine("Operation complete. Print results? y/n");
-            char input = Console.ReadKey().KeyChar;
-            if (input == 'y' || input == 'Y')
-            {
-                foreach (double d in results)
-                {
-                    Console.Write("{0} ", d);
-                }
-            }
 
-
-
-
-            //ParallelTest.PTest();
+            var result = thre.Values.ToArray();
+     
+        
+            Console.WriteLine(result); 
 
             //var linearDataset = new Dataset(Utils.CSVtoArray(@"C:\Users\ville\Downloads\lohi.csv").ToArray());
 
@@ -61,12 +41,12 @@ namespace vNet
 
             //var dataset = Utils.DatasetCreator(@"C:\Users\ville\Downloads\mnist_png.tar\linear");
 
-            var logReg = new LogisticRegression(200, .01f, 128);
+            var logReg = new LogisticRegression(3, .01f, 256);
             
             
             
 
-            logReg.TrainModel(@"C:\Users\Viert\Downloads\mnist_png.tar\mnist_png");
+            logReg.TrainModel(@"C:\Users\ville\Downloads\mnist_png.tar\linear");
 
             //var linearReg = new LinearRegression(linearDataset, 10, 0.01f);
 
@@ -89,5 +69,23 @@ namespace vNet
 
 
         
+    }
+
+    class TT
+    {
+        public int Num;
+
+        public TT()
+        {
+            Num = 0;
+        }
+
+        public void print(int i)
+        {
+           
+            Num += i;
+            Console.WriteLine("th: " + Thread.CurrentThread.ManagedThreadId+" numA = "+(Num-i)+" num = "+Num);
+
+        }
     }
 }
