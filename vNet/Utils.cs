@@ -13,6 +13,29 @@ namespace vNet
     internal class Utils
     {
 
+
+        public static (float[], float[], string)[][] SplitToMiniBatch((float[],float[],string)[] data, int mBatch)
+        {
+            var batchCount = data.Length/mBatch;
+            var result = new List<(float[], float[], string)[]>();
+
+
+            var test = Partitioner.Create(0, mBatch);
+
+            for (int i = 0; i < batchCount; i++)
+            {
+                result.Add((data.Skip(i * mBatch).Take(mBatch)).ToArray());
+            }
+
+            if(data.Length % mBatch != 0)
+            {
+                result.Add((data.Skip(batchCount * mBatch).Take(data.Length%mBatch)).ToArray());
+            }
+
+
+            return result.ToArray();
+        }
+
         public static ((float[], float[], string)[], (float[], float[], string)[]) DataArrayCreator(string path)
         {
             // Console.WriteLine("Creating dataset from files.. please wait, this may take few seconds");

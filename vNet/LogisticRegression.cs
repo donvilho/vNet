@@ -1,5 +1,6 @@
 ﻿using ScottPlot;
 using System;
+using System.Collections.Concurrent;
 using System.Drawing;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -12,6 +13,8 @@ namespace vNet
         private float[] Error, Neurons, Derivate;
         private float[][] Weights, WeightCache;
         private float[] Bias, BiasCache;
+
+        private ConcurrentBag<float[][]> WCache;
 
         private readonly int Epoch;
         private readonly float LearningRate;
@@ -36,14 +39,14 @@ namespace vNet
             var rand = new Random();
             var Datasets = Utils.DataArrayCreator(path);
 
-
-            var TrainingData = Datasets.Item1;
             var TestData = Datasets.Item2;
 
-            var neuronCount = TrainingData[0].Item2.Length;
-            var inputLenght = TrainingData[0].Item1.Length;
-            
-            
+            var Batches = Utils.SplitToMiniBatch(Datasets.Item1, MiniBatch);
+
+            var neuronCount = Datasets.Item2[0].Item2.Length;
+            var inputLenght = Datasets.Item2[0].Item1.Length;
+
+
             Derivate = new float[neuronCount];
             Error = new float[neuronCount];
             Neurons = new float[neuronCount];
@@ -61,114 +64,57 @@ namespace vNet
             BiasCache = new float[inputLenght];
            
 
-            /*
-            Derivate = new float[dataset.TrainingData[0].Y.Length];
-            Error = new float[dataset.TrainingData[0].Y.Length];
-            Neurons = new float[dataset.TrainingData[0].Y.Length];
-
-            Weights = new float[dataset.TrainingData[0].Y.Length][];
-            WeightCache = new float[dataset.TrainingData[0].Y.Length][];
-
-            for (int i = 0; i < Weights.Length; i++)
-            {
-                Weights[i] = Utils.Generate_Vector(dataset.InputLenght, 0.001, 0.009);
-                WeightCache[i] = new float[dataset.InputLenght];
-            }
-
-            Bias = Utils.Generate_Vector(dataset.InputLenght);
-            BiasCache = new float[dataset.InputLenght];
-            */
-
             double[,] PlotData = new double[Epoch, 2];
 
-            var BatchCount = 0;
+            
             
             
             for (int e = 0; e < Epoch; e++)
             {
 
                 Console.WriteLine(e);
-                var EpochError = 0f;
+                var EpochError = new ConcurrentBag<float>();
 
                 //Console.WriteLine("Start Training");
 
-                for (int Count = TrainingData.Length - 1; Count > 1; Count--)
+                for (int Count = Batches.Length - 1; Count > 1; Count--)
                 {
                     int i = rand.Next(Count + 1);
-                    var value = TrainingData[i];
-                    TrainingData[i] = TrainingData[Count];
-                    TrainingData[Count] = value;
+                    var value = Batches[i];
+                    Batches[i] = Batches[Count];
+                    Batches[Count] = value;
                 }
 
-                foreach (var input in TrainingData)
+                foreach (var batch in Batches)
                 {
-                    //Forward
-                    //var ExpSum = 0f;
-                    var Loss = 0f;
 
-                    /*
-                    var ExpSum = 0f;
-                    
-                    for (int i = 0; i < Neurons.Length; i++)
+                    var rangePart = Partitioner.Create(0, batch.Length);
+
+                    Parallel.ForEach(rangePart, range =>
                     {
-                        Neurons[i] = Bias[i] + Utils.Dot(Weights[i], input.Item1);
-                        //Calc EXP SUM
-                        ExpSum += (float)Math.Exp(Neurons[i]);
-                    }  
-                    */
 
-                    var ExpSum = Forward(input);
-
-
-                    /*
-                    for (int i = 0; i < Derivate.Length; i++)
-                    {
-                        //CalcError/activate
-                        Error[i] = (float)Math.Exp(Neurons[i]) / ExpSum;
-                        Loss += input.Item2[i] * (float)Math.Log(Error[i]);
-                        //CalcDerivates
-                        //D-A
-                        Derivate[i] = Error[i] - input.Item2[i];
-                        //D-Z
-                        Derivate[i] *= Error[i] * (1 - Error[i]);
-
-                        for (int j = 0; j < WeightCache[i].Length; j++)
+                        for (int i = range.Item1; i < range.Item2; i++)
                         {
-                            //D-W
-                            WeightCache[i][j] += input.Item1[j] * Derivate[i];
-                            //D-B
-                            BiasCache[i] += Bias[i] * Derivate[i];
+                            var Loss = 0f;
+                            var ExpSum = Forward(batch[i]);
+                            Loss = Backward(batch[i], ExpSum);
+                            EpochError.Add(-Loss);
                         }
-                    }
-                    */
+                    });
 
-                    Loss = Backward(input,ExpSum);
-                    Loss = -Loss;
-                    EpochError += Loss;
-
-                    BatchCount++;
-
-                    if (BatchCount == MiniBatch)
+                    for (int i = 0; i < Weights.Length; i++)
                     {
-                      
-
-                        for (int i = 0; i < Weights.Length; i++)
+                        Bias[i] -= (BiasCache[i] / MiniBatch) * LearningRate;
+                        BiasCache[i] = 0;
+                        for (int j = 0; j < Weights[i].Length; j++)
                         {
-                            Bias[i] -= (BiasCache[i] / MiniBatch) * LearningRate;
-                            BiasCache[i] = 0;
-                            for (int j = 0; j < Weights[i].Length; j++)
-                            {
-                              
-                               Weights[i][j] -= (WeightCache[i][j] / MiniBatch) * LearningRate;
-                               WeightCache[i][j] = 0;
-                            }
 
-                            BatchCount = 0;
+                            Weights[i][j] -= (WeightCache[i][j] / MiniBatch) * LearningRate;
+                            WeightCache[i][j] = 0;
                         }
                     }
                 }
 
-                //Console.WriteLine("Training finish");
 
 
                 var TestError = 0f;
@@ -295,6 +241,21 @@ namespace vNet
 
             return ExpSum;
         }
+
+        public float CalcError(float ExpSum)
+        {
+            var loss = 0f;
+
+            for (int i = 0; i < Derivate.Length; i++)
+            {
+                //CalcError/activate
+
+                Error[i] = (float)Math.Exp(Neurons[i]) / ExpSum;
+                Loss += input.Item2[i] * (float)Math.Log(Error[i]);
+
+            }
+        }
+
 
         public float Backward((float[], float[], string) input, float ExpSum, bool ParallelDegree = false)
         {
