@@ -206,7 +206,7 @@ namespace vNet
                     //CalcError/activate
                     for (int i = 0; i < Neurons.Length; i++)
                     {
-                        Error[i] = (float)Math.Exp(Neurons[i]) / ExpSum;
+                        Error[i] = (float)Utils.exp1(Neurons[i]) / ExpSum;
 
                         //loss - softmax
 
@@ -290,7 +290,7 @@ namespace vNet
             {
                 Neurons[i] = Bias[i] + Utils.Dot(Weights[i], input.Item1);
                 //Calc EXP SUM
-                ExpSum += (float)Math.Exp(Neurons[i]);
+                ExpSum += (float)Utils.exp1(Neurons[i]);
             }
 
             return ExpSum;
@@ -307,7 +307,7 @@ namespace vNet
                     {
                         //CalcError/activate
 
-                        Error[i] = (float)Math.Exp(Neurons[i]) / ExpSum;
+                        Error[i] = (float)Utils.exp1(Neurons[i]) / ExpSum;
                         Loss += input.Item2[i] * (float)Math.Log(Error[i]);
 
                         //Loss += input.Item2[i] * (float)Math.Log(Math.Exp(Neurons[i]) / ExpSum);
@@ -331,7 +331,7 @@ namespace vNet
 
                     void Kernel(int i)
                     {
-                        Error[i] = (float)Math.Exp(Neurons[i]) / ExpSum;
+                        Error[i] = (float)Utils.exp1(Neurons[i]) / ExpSum;
                         Loss += input.Item2[i] * (float)Math.Log(Error[i]);
 
 
