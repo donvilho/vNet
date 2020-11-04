@@ -12,7 +12,70 @@ namespace vNet
 {
     internal class Utils
     {
+        public static float NumericSigmoid(double x)
+        {
+            return (float)(1 / (1 + Math.Pow(0.3678749025, x)));
+        }
+        public static float SigmoidNormalDerivate(float x)
+        {
+            return (float)(1 / (1 + Utils.exp1(-x)) * (1 - (1 / (1 + Utils.exp1(-x)))));
+        }
 
+        public static float SigmoidSuperDerivate(float x)
+        {
+            var r = (2 + 2 * (Math.Abs(x)));
+
+            return (float)(2 / (r*r));
+        }
+
+        public static float SigmoidSuper(float x)
+        {
+            return (float)(x / (2 + 2 * Math.Abs(x)) + 0.5);
+        }
+        public static float SigmoidNormal(float A)
+        {
+            return (float)(1 / (1 + Math.Exp(-A)));
+        }
+        public static float SigmoidFast(double value)
+        {
+            float k = (float)Math.Exp(value);
+            return k / (1.0f + k);
+        }
+
+        public static double exp1(double x)
+        {
+            return (6 + x * (6 + x * (3 + x))) * 0.16666666f;
+        }
+
+        public static double exp2(double x)
+        {
+            return (24 + x * (24 + x * (12 + x * (4 + x)))) * 0.041666666f;
+        }
+
+        public static double exp3(double x)
+        {
+            return (120 + x * (120 + x * (60 + x * (20 + x * (5 + x))))) * 0.0083333333f;
+        }
+
+        public static double exp4(double x)
+        {
+            return (720 + x * (720 + x * (360 + x * (120 + x * (30 + x * (6 + x))))))*0.0013888888f;
+        }
+
+        public static double exp5(double x)
+        {
+            return (5040 + x * (5040 + x * (2520 + x * (840 + x * (210 + x * (42 + x * (7 + x))))))) * 0.00019841269f;
+        }
+
+        public static double exp6(double x)
+        {
+            return (40320 + x * (40320 + x * (20160 + x * (6720 + x * (1680 + x * (336 + x * (56 + x * (8 + x)))))))) * 2.4801587301e-5;
+        }
+
+        public static double exp7(double x)
+        {
+            return (362880 + x * (362880 + x * (181440 + x * (60480 + x * (15120 + x * (3024 + x * (504 + x * (72 + x * (9 + x))))))))) * 2.75573192e-6;
+        }
 
         public static (float[], float[], string)[][] SplitToMiniBatch((float[],float[],string)[] data, int mBatch)
         {
@@ -280,10 +343,27 @@ namespace vNet
                 {
                     Color pixel = img.GetPixel(j, i);
                     float color = (pixel.R + pixel.B + pixel.G) / 3;
-                    Result[img.Height * i + j] = color / 255;
+
+                    Result[img.Height * i + j] = color/255;
                 }
             }
             return Result;
+        }
+
+        public static void DrawFromArray(float[] img)
+        {
+            var len = (int)Math.Sqrt(img.Length);
+
+
+            for (int i = 0; i < len; i++)
+            {
+                for (int j = 0; j < len; j++)
+                {
+                    Console.Write(img[(i * len) + j]);
+                }
+                Console.WriteLine();
+            }
+
         }
     }
 }

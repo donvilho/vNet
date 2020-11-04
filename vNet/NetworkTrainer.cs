@@ -302,7 +302,7 @@ namespace vNet
                 
                 Console.ReadKey();
             }
-            Plot.Graph(PlotData);
+            Plot.Graph(PlotData,learningRate,miniBatch);
         }
 
         private float[] Multiply(float[] a, float b)

@@ -15,7 +15,7 @@ namespace vNet
         /// Method for plotting data to .png
         /// </summary>
         /// <param name="dataPoints"></param>
-        public static void Graph(double[,] dataPoints)
+        public static void Graph(double[,] dataPoints,float lr, int mb)
         {
 
             double[] DataError = new double[dataPoints.GetUpperBound(0) + 1];
@@ -32,30 +32,30 @@ namespace vNet
             /// plot the data
             /// 
           
-            var plt_acc = new ScottPlot.Plot(800, 600);
-            var plt_loss = new ScottPlot.Plot(800, 600);
-            plt_acc.PlotScatter(dataXs, DataAccuracy, label: "Accuracy");
-            plt_loss.PlotScatter(dataXs, DataError, label: "Error rate");
+            var plt = new ScottPlot.Plot(800, 600);
+          
+            plt.PlotScatter(dataXs, DataAccuracy, label: "Accuracy");
+            plt.PlotScatter(dataXs, DataError, label: "Error rate");
 
-            plt_acc.Grid(xSpacing: 20, ySpacing: .1);
-            plt_loss.Grid(xSpacing: 5, ySpacing: .1);
+            //plt.Grid(xSpacing: 20, ySpacing: .1);
 
-            plt_acc.Legend(location: legendLocation.upperLeft);
-            plt_loss.Legend(location: legendLocation.upperLeft);
+            plt.AxisAutoY(0.1);
 
-            plt_acc.Title("Accuracy");
-            plt_loss.Title("Loss");
+            plt.Legend(location: legendLocation.upperLeft);
 
-            plt_acc.XLabel("Epoch");
-            plt_acc.YLabel("Accuracy");
 
-            plt_loss.XLabel("Epoch");
-            plt_loss.YLabel("Loss");
+            plt.Title("Network lr: "+lr+" mb: "+mb);
+       
 
-            plt_acc.SaveFig("NN_acc.png");
-            plt_loss.SaveFig("NN_loss.png");
-            Process.Start(new ProcessStartInfo(@"NN_acc.png") { UseShellExecute = true });
-            Process.Start(new ProcessStartInfo(@"NN_loss.png") { UseShellExecute = true });
+            plt.XLabel("Epoch");
+            plt.YLabel("Accuracy");
+
+             
+
+     
+            plt.SaveFig("NN_plot_lr_" + lr.ToString() + "_batchsize_" + mb.ToString() + ".png");
+
+            Process.Start(new ProcessStartInfo("NN_plot_lr_" + lr.ToString() + "_batchsize_" + mb.ToString() + ".png") { UseShellExecute = true });
         }
     }
 }

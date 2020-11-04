@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace vNet
@@ -10,53 +13,96 @@ namespace vNet
     class Trainer
     {
 
-        private Network Network;
+        public readonly Network Net;
+    
 
         public Trainer(Network net)
         {
-            Network = net;
+            Net = net;
+     
         }
+
 
         public void Train((float[], float[], string) input)
         {
-            var ExpSum = 0f;
-            var Loss = 0f;
- 
-            for (int i = 0; i < Network.Neurons.Length; i++)
+            //var Loss = 0f;
+
+            for (int i = 0; i < Net.Neurons.Length; i++)
             {
-                Network.Neurons[i] = Network.Bias[i] + Utils.Dot(Network.Weights[i], input.Item1);
-                //Calc EXP SUM
-                ExpSum += (float)Math.Exp(Network.Neurons[i]);
+                Net.Neurons[i].ForwardCalculation(input.Item1);
+                Net.Error[i] = (float)Math.Exp(Net.Neurons[i].Value);
             }
 
-            Network.Neurons.Sum();
+            var ExpSum = Net.Error.Sum();
 
-            for (int i = 0; i < Network.Derivate.Length; i++)
+            for (int i = 0; i < Net.Error.Length; i++)
             {
-                //CalcError/activate
-
-                Network.Error[i] = (float)Math.Exp(Network.Neurons[i]) / ExpSum;
-                Loss += input.Item2[i] * (float)Math.Log(Network.Error[i]);
-
-                //Loss += input.Item2[i] * (float)Math.Log(Math.Exp(Neurons[i]) / ExpSum);
-                //CalcDerivates
-                //D-A
-                Network.Derivate[i] = Network.Error[i] - input.Item2[i];
-                //D-Z
-                Network.Derivate[i] *= Network.Error[i] * (1 - Network.Error[i]);
-
-
-
-                for (int j = 0; j < Network.WeightCache[i].Length; j++)
-                {
-                    //D-W
-                    Network.WeightCache[i][j] += input.Item1[j] * Network.Derivate[i];
-                    //D-B
-                    Network.BiasCache[i] += Network.Bias[i] * Network.Derivate[i];
-                }
+                Net.Error[i] /= ExpSum;
+              //  Loss += input.Item2[i] * (float)Math.Log(Error[i]);
             }
-            //return (WeightCache,BiasCache, Loss);
+
+            //Loss = -Loss;
+           
+
+            for (int i = 0; i < Net.Neurons.Length; i++)
+            {
+                //* (Net.Error[i] * (1 - Net.Error[i])
+                Net.Neurons[i].Derivate = Net.Error[i] - input.Item2[i] ;
+                //Net.Neurons[i].Derivate = -input.Item2[i] * (float)Math.Log(Net.Error[i]);
+                Net.Neurons[i].Backpropagate(input.Item1);
+            }
+
         }
 
+        public (float, bool, int) Test((float[], float[], string) input)
+        {
+            var Loss = 0f;
+
+            for (int i = 0; i < Net.Neurons.Length; i++)
+            {
+                Net.Neurons[i].ForwardCalculation(input.Item1);
+                if (float.IsNaN(Net.Neurons[i].Value))
+                {
+                    Console.WriteLine();
+                }
+                Net.Error[i] = (float)Math.Exp(Net.Neurons[i].Value);
+                if (float.IsNaN(Net.Error[i]))
+                {
+                    Console.WriteLine();
+                }
+            }
+
+            var ExpSum = Net.Error.Sum();
+
+            for (int i = 0; i < Net.Error.Length; i++)
+            {
+                Net.Error[i] /= ExpSum;
+
+                
+                if (float.IsNaN(input.Item2[i] * (float)Math.Log(Net.Error[i])))
+                {
+                    Console.WriteLine("NAN : "+input.Item2[i]+" - "+ Net.Error[i]+" threa: "+Thread.CurrentThread.ManagedThreadId);
+                }
+                Loss += input.Item2[i] * (float)Math.Log(Net.Error[i]);
+                
+            }
+
+            int position = 0;
+
+            for (int i = 0; i < Net.Error.Length; i++)
+            {
+                if(Net.Error[i] < Net.Error.Max())
+                {
+                    Net.Error[i] = 0;
+                }
+                else
+                {
+                    Net.Error[i] = 1;
+                    position = i;
+                }
+            }
+
+            return (-Loss, Net.Error.SequenceEqual(input.Item2),position);
+        }
     }
 }
