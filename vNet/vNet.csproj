@@ -68,6 +68,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Dataset.cs" />
+    <Compile Include="EpochResult.cs" />
     <Compile Include="Input.cs" />
     <Compile Include="Layer.cs" />
     <Compile Include="LinearRegression.cs" />

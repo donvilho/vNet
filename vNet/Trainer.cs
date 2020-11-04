@@ -23,14 +23,13 @@ namespace vNet
         }
 
 
-        public void Train((float[], float[], string) input)
+        public void Train(Input Data)
         {
-            //var Loss = 0f;
 
             for (int i = 0; i < Net.Neurons.Length; i++)
             {
-                Net.Neurons[i].ForwardCalculation(input.Item1);
-                Net.Error[i] = (float)Math.Exp(Net.Neurons[i].Value);
+                Net.Neurons[i].ForwardCalculation(Data.Data);
+                Net.Error[i] = (float)Utils.exp4(Net.Neurons[i].Value);
             }
 
             var ExpSum = Net.Error.Sum();
@@ -38,38 +37,27 @@ namespace vNet
             for (int i = 0; i < Net.Error.Length; i++)
             {
                 Net.Error[i] /= ExpSum;
-              //  Loss += input.Item2[i] * (float)Math.Log(Error[i]);
             }
 
-            //Loss = -Loss;
-           
-
+          
             for (int i = 0; i < Net.Neurons.Length; i++)
             {
                 //* (Net.Error[i] * (1 - Net.Error[i])
-                Net.Neurons[i].Derivate = Net.Error[i] - input.Item2[i] ;
+                Net.Neurons[i].Derivate = Net.Error[i] - Data.TruthLabel[i] ;
                 //Net.Neurons[i].Derivate = -input.Item2[i] * (float)Math.Log(Net.Error[i]);
-                Net.Neurons[i].Backpropagate(input.Item1);
+                Net.Neurons[i].Backpropagate(Data.Data);
             }
 
         }
 
-        public (float, bool, int) Test((float[], float[], string) input)
+        public (float, bool, int) Test(Input Data)
         {
             var Loss = 0f;
 
             for (int i = 0; i < Net.Neurons.Length; i++)
             {
-                Net.Neurons[i].ForwardCalculation(input.Item1);
-                if (float.IsNaN(Net.Neurons[i].Value))
-                {
-                    Console.WriteLine();
-                }
+                Net.Neurons[i].ForwardCalculation(Data.Data);
                 Net.Error[i] = (float)Math.Exp(Net.Neurons[i].Value);
-                if (float.IsNaN(Net.Error[i]))
-                {
-                    Console.WriteLine();
-                }
             }
 
             var ExpSum = Net.Error.Sum();
@@ -78,12 +66,7 @@ namespace vNet
             {
                 Net.Error[i] /= ExpSum;
 
-                
-                if (float.IsNaN(input.Item2[i] * (float)Math.Log(Net.Error[i])))
-                {
-                    Console.WriteLine("NAN : "+input.Item2[i]+" - "+ Net.Error[i]+" threa: "+Thread.CurrentThread.ManagedThreadId);
-                }
-                Loss += input.Item2[i] * (float)Math.Log(Net.Error[i]);
+                Loss += Data.TruthLabel[i] * (float)Math.Log(Net.Error[i]);
                 
             }
 
@@ -102,7 +85,7 @@ namespace vNet
                 }
             }
 
-            return (-Loss, Net.Error.SequenceEqual(input.Item2),position);
+            return (-Loss, Net.Error.SequenceEqual(Data.TruthLabel),position);
         }
     }
 }

@@ -120,14 +120,14 @@ namespace vNet
                 }
                 var NetworkOutput = Neurons[Neurons.Length - 1];
 
-                NetworkOutput.SequenceEqual(input.Y);
+                NetworkOutput.SequenceEqual(input.TruthLabel);
 
-                if (NetworkOutput.SequenceEqual(input.Y))
+                if (NetworkOutput.SequenceEqual(input.TruthLabel))
                 {
                     Accuracy++;
                 }
 
-                NeuronsBackprop[Neurons.Length - 1] = LossFunction(Neurons[Neurons.Length - 1], input.Y, costFunction);
+                NeuronsBackprop[Neurons.Length - 1] = LossFunction(Neurons[Neurons.Length - 1], input.TruthLabel, costFunction);
                 TotalError += NeuronsBackprop[Neurons.Length - 1].Sum();
             }
             Console.WriteLine("TEST: " + Accuracy / inputs.ValidationgData.Length);
@@ -143,9 +143,9 @@ namespace vNet
         /// <param name="miniBatch"></param>
         public void Train(Dataset inputs, float learningRate, int epoch, CostFunction costFunction, int miniBatch = 32)
         {
-            if (Neurons[Neurons.Length - 1].Length != inputs.TrainingData[0].Y.Length)
+            if (Neurons[Neurons.Length - 1].Length != inputs.TrainingData[0].TruthLabel.Length)
             {
-                throw new Exception("Wrong last layer size!!! network output is " + Neurons[Neurons.Length - 1].Length + " and dataset output is " + inputs.TrainingData[0].Y.Length);
+                throw new Exception("Wrong last layer size!!! network output is " + Neurons[Neurons.Length - 1].Length + " and dataset output is " + inputs.TrainingData[0].TruthLabel.Length);
             }
 
             var lastIndex = Neurons.Length - 1;
@@ -193,7 +193,7 @@ namespace vNet
 
                     // Calculate error
 
-                    NeuronsBackprop[Neurons.Length - 1] = LossFunction(Neurons[Neurons.Length - 1], input.Y, costFunction);
+                    NeuronsBackprop[Neurons.Length - 1] = LossFunction(Neurons[Neurons.Length - 1], input.TruthLabel, costFunction);
                     TotalEpochError += NeuronsBackprop[Neurons.Length - 1].Sum();
 
                     if (counter == 10)

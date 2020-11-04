@@ -23,8 +23,6 @@ namespace vNet
         private int Classes;
         private Network Net;
 
-        //private readonly Network Net;
-
         public LogisticRegression(int epoch, float learningrate, int minibatch = 0)
         {
             Epoch = epoch;
@@ -39,46 +37,16 @@ namespace vNet
             throw new NotImplementedException();
         }
 
-        public unsafe void TrainModel(string path, int reduce = 100, bool plot = false)
+        public unsafe void TrainModel(Dataset Dataset, bool plot = false)
         {
            
-            var rand = new Random();
-            var Datasets = Utils.DataArrayCreator(path);
-
-            for (int Count = Datasets.Item1.Length - 1; Count > 1; Count--)
-            {
-                int i = rand.Next(Count + 1);
-                var value = Datasets.Item1[i];
-                Datasets.Item1[i] = Datasets.Item1[Count];
-                Datasets.Item1[Count] = value;
-            }
-
-            for (int Count = Datasets.Item2.Length - 1; Count > 1; Count--)
-            {
-                int i = rand.Next(Count + 1);
-                var value = Datasets.Item2[i];
-                Datasets.Item2[i] = Datasets.Item2[Count];
-                Datasets.Item2[Count] = value;
-            }
-
-            var TrainingData = Datasets.Item1.Take((Datasets.Item1.Length / 100) * reduce).ToArray() ;
-            var TestData = Datasets.Item2.Take((Datasets.Item2.Length / 100) * reduce).ToArray() ;
-            var neuronCount = Datasets.Item2[0].Item2.Length;
-            var inputLenght = Datasets.Item2[0].Item1.Length;
+            var neuronCount = Dataset.OutputLenght;
+            var inputLenght = Dataset.InputLenght;
             Classes = neuronCount;
 
-            /*
-            for (int i = 0; i < 10; i++)
-            {
-                Console.WriteLine("----" + TestData[i].Item3.ToString()); ;
-                Utils.DrawFromArray(TestData[i].Item1);
-                Console.ReadKey();
-            }
-            */
+            Net = new Network(neuronCount, inputLenght);
 
-        Net = new Network(neuronCount, inputLenght);
-
-            if (MiniBatch == 0) { MiniBatch = TrainingData.Length; }
+            if (MiniBatch == 0) { MiniBatch = Dataset.TrainingData.Length; }
 
             int BatchCount = 0;
 
@@ -88,16 +56,10 @@ namespace vNet
 
             for (int e = 0; e < Epoch; e++)
             {
-                for (int Count = TrainingData.Length - 1; Count > 1; Count--)
-                {
-                    int i = rand.Next(Count + 1);
-                    var value = TrainingData[i];
-                    TrainingData[i] = TrainingData[Count];
-                    TrainingData[Count] = value;
-                }
 
+                Dataset.Shuffle(Dataset.TrainingData);
 
-                foreach (var input in TrainingData)
+                foreach (var input in Dataset.TrainingData)
                 {
                     trainer.Train(input);
                     BatchCount++;
@@ -111,26 +73,27 @@ namespace vNet
    
                 }
                
-                TestNet(e, TestData);
+                TestNet(Dataset.ValidationgData, e);
                 
             }
 
-            TestNet(Epoch, TestData,true);
+            TestNet(Dataset.ValidationgData,Epoch,true);
 
             Plot.Graph(PlotData, LearningRate,MiniBatch);
      
         }
 
 
-        private void TestNet(int e,(float[],float[],string)[] TestData, bool plot=false)
+        private void TestNet(Input[] Data, int epoch, bool plot=false)
         {
+            
             var trainer = new Trainer(Net);
             var TestError = 0f;
             var Accuracy = 0f;
             var classcount = new int[Classes];
             Heatmap.Clear();
 
-            foreach (var input in TestData)
+            foreach (var input in Data)
             {
                 var result = trainer.Test(input);
 
@@ -139,9 +102,9 @@ namespace vNet
 
                 var yPos = 0;
 
-                for (int i = 0; i < input.Item2.Length; i++)
+                for (int i = 0; i < input.TruthLabel.Length; i++)
                 {
-                    if(input.Item2[i] == 1)
+                    if(input.Data[i] == 1)
                     {
                         yPos = i;
                         classcount[i]++;
@@ -155,15 +118,15 @@ namespace vNet
 
             if (!plot)
             {
-                PlotData[e, 0] = TestError / TestData.Length;
-                PlotData[e, 1] = Accuracy / TestData.Length;
+                PlotData[epoch, 0] = TestError / Data.Length;
+                PlotData[epoch, 1] = Accuracy / Data.Length;
 
             }
 
             //Console.WriteLine(TestError / TestData.Length);
-            Console.WriteLine("Epoch: " + e + " Acccuracy: " + Accuracy / TestData.Length + " Error: " + TestError / TestData.Length);
+            Console.WriteLine("Epoch: " + epoch + " Acccuracy: " + Accuracy / Data.Length + " Error: " + TestError / Data.Length);
 
-            if ((Accuracy / TestData.Length > 0.99) | plot)
+            if ((Accuracy / Data.Length > 0.99) | plot)
             {
 
                 var faults = new int[Classes];

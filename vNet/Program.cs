@@ -23,11 +23,14 @@ namespace vNet
     {
          static void Main(string[] args)
        {
+            var trainingset = Utils.DataArrayCreator(@"C:\Users\Viert\Downloads\mnist_png.tar\mnist_png\training\");
+            var testset = Utils.DataArrayCreator(@"C:\Users\Viert\Downloads\mnist_png.tar\mnist_png\testing\");
+            var Dataset = new Dataset(trainingset, testset);
 
-            Console.WriteLine(Math.Exp(0));
+            Dataset.Reduce(20);
 
             var logReg = new LogisticRegression(600, .001f);
-            logReg.TrainModel(@"C:\Users\ville\Downloads\mnist_png.tar\mnist_png",20);
+            logReg.TrainModel(Dataset);
 
         }
     }

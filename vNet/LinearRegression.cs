@@ -43,7 +43,7 @@ namespace vNet
                 foreach (var input in Dataset.TrainingData)
                 {
                     var Output = Bias + Utils.Dot(input.Data, Weights);
-                    var Error = input.Yh - Output;
+                    var Error = input.TruthLabel[0] - Output;
 
                     Console.WriteLine(Error);
                     Console.ReadKey();

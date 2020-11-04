@@ -99,56 +99,41 @@ namespace vNet
             return result.ToArray();
         }
 
-        public static ((float[], float[], string)[], (float[], float[], string)[]) DataArrayCreator(string path)
+        public static Input[] DataArrayCreator(string path)
         {
-            // Console.WriteLine("Creating dataset from files.. please wait, this may take few seconds");
+             Console.WriteLine("Creating dataset from files.. please wait, this may take few seconds");
 
+            ConcurrentBag<Input> Dataset = new ConcurrentBag<Input>();
 
+                        
+                var labels = Directory.GetDirectories(path);
 
-            ConcurrentBag<(float[],float[],string)> TrainingData = new ConcurrentBag<(float[],float[],string)>();
-            ConcurrentBag<(float[], float[], string)> TestData = new ConcurrentBag<(float[], float[], string)>();
-
-            try
-            {
-                var sets = Directory.GetDirectories(path);
-
-                for (int s = 0; s < sets.Length; s++)
-                {
-                    string setName = new DirectoryInfo(sets[s]).Name;
-
-                    var labels = Directory.GetDirectories(sets[s]);
-
+               
                     for (int i = 0; i < labels.Length; i++)
                     {
                         // Console.WriteLine(i);
                         string[] files = Directory.GetFiles(labels[i]);
-                        string label = new DirectoryInfo(labels[i]).Name;
+                        string labelName = new DirectoryInfo(labels[i]).Name;
 
                         Parallel.ForEach(files, (img) =>
                         {
                             var truthLabel = LabelVectorCreator(labels.Length, i);
 
-                            if (setName.Contains("training"))
-                            {
-                                TrainingData.Add((ImageToArray(img), truthLabel,  label));
-                            }
-                            else
-                            {
-                                TestData.Add((ImageToArray(img), truthLabel,  label));
-                            }
+                            Dataset.Add(new Input(ImageToArray(img), truthLabel,  labelName));
+                       
                         });
                     }
-                }
+                
 
 
-                return (TrainingData.ToArray(), TestData.ToArray());
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return (TrainingData.ToArray(), TestData.ToArray());
-            }
+                return Dataset.ToArray();
+            
+
         }
+
+
+
+
 
         public static List<Input> CSVtoArray(string path)
         {
@@ -167,7 +152,7 @@ namespace vNet
                 }
                 var data = new float[] { temp[1], temp[2] };
 
-                result.Add(new Input(temp[3], data));
+                result.Add(new Input(data, temp[3]));
             }
 
             return result;

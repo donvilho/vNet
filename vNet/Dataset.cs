@@ -18,6 +18,7 @@ namespace vNet
         public Input[] TrainingData { get; private set; }
         public Input[] ValidationgData { get; private set; }
         public int InputLenght { get; private set; }
+        public int OutputLenght { get; private set; }
 
         public Dataset(Input[] dataset)
         {
@@ -33,7 +34,17 @@ namespace vNet
             TrainingData = training;
             ValidationgData = test;
             InputLenght = TrainingData[0].Data.Length;
+            OutputLenght = TrainingData[0].TruthLabel.Length;
         }
+
+        public void Reduce(int value)
+        {
+            Shuffle(TrainingData);
+            TrainingData = TrainingData.Take((TrainingData.Length / 100) * value).ToArray();
+            Shuffle(ValidationgData);
+            ValidationgData = ValidationgData.Take((ValidationgData.Length / 100) * value).ToArray();
+        }
+
 
         public void Shuffle(Input[] Array)
         {
@@ -50,8 +61,6 @@ namespace vNet
 
         private void Normalize()
         {
-
-
             var colsMean = new float[TrainingData[0].Data.Length];
             var colsMax = new float[TrainingData[0].Data.Length];
 

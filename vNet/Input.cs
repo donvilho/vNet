@@ -9,38 +9,32 @@ using System.Threading.Tasks;
 namespace vNet
 {
    
-    class Input
+    struct Input
     {
-        public float[] Y { get; private set; }
-        public float Yh { get; private set; }
+        public float[] TruthLabel { get; private set; }
         public float[] Data { get; private set; }
         public string LabelName { get; private set; }
 
 
-        public Input(float[] y, float[] data, string labelname)
+        public Input(float[] data, float[] y, string labelname)
         {
-            Y = y;
+            TruthLabel = y;
             LabelName = labelname;
             Data = data;
         }
 
-        public Input(float[]y , float[] data)
+        public Input(float[]data , float[] y)
         {
-            Y = y;
+            TruthLabel = y;
             Data = data;
+            LabelName = null;
         }
 
-        public Input(float y, float[] data)
+        public Input(float[] data, float y)
         {
-            Yh = y;
+            TruthLabel = new float[] { y};
             Data = data;
-        }
-
-        public Input(float y, float[] data, string labelname)
-        {
-            LabelName = labelname;
-            Yh = y;
-            Data = data;
+            LabelName = null;
         }
     }
 }

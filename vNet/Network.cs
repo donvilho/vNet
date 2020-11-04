@@ -12,7 +12,7 @@ namespace vNet
     {
         public readonly Neuron[] Neurons;
         public float[] Error;
-      
+        
 
         public Network(int neuronCount, int inputLenght)
         {
