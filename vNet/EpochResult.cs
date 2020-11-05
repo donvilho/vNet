@@ -6,14 +6,16 @@ using System.Threading.Tasks;
 
 namespace vNet
 {
-    class EpochResults
+    class Result
     {
-        public float[] ErrorRate;
-        public int[] Accuracy;
+        public int Position;
+        public float ErrorRate;
+        public bool Correct;
 
-        public EpochResults()
+        public Result()
         {
-
+            ErrorRate = 0 ;
+            
         }
 
     }

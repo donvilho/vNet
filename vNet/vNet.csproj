@@ -72,7 +72,7 @@
     <Compile Include="Input.cs" />
     <Compile Include="Layer.cs" />
     <Compile Include="LinearRegression.cs" />
-    <Compile Include="LogisticRegression.cs" />
+    <Compile Include="Models\LogisticRegression.cs" />
     <Compile Include="mics.cs" />
     <Compile Include="Model.cs" />
     <Compile Include="Network.cs" />

@@ -16,6 +16,7 @@ namespace vNet
         {
             return (float)(1 / (1 + Math.Pow(0.3678749025, x)));
         }
+
         public static float SigmoidNormalDerivate(float x)
         {
             return (float)(1 / (1 + Utils.exp1(-x)) * (1 - (1 / (1 + Utils.exp1(-x)))));
@@ -25,17 +26,19 @@ namespace vNet
         {
             var r = (2 + 2 * (Math.Abs(x)));
 
-            return (float)(2 / (r*r));
+            return (float)(2 / (r * r));
         }
 
         public static float SigmoidSuper(float x)
         {
             return (float)(x / (2 + 2 * Math.Abs(x)) + 0.5);
         }
+
         public static float SigmoidNormal(float A)
         {
             return (float)(1 / (1 + Math.Exp(-A)));
         }
+
         public static float SigmoidFast(double value)
         {
             float k = (float)Math.Exp(value);
@@ -59,7 +62,7 @@ namespace vNet
 
         public static double exp4(double x)
         {
-            return (720 + x * (720 + x * (360 + x * (120 + x * (30 + x * (6 + x))))))*0.0013888888f;
+            return (720 + x * (720 + x * (360 + x * (120 + x * (30 + x * (6 + x)))))) * 0.0013888888f;
         }
 
         public static double exp5(double x)
@@ -77,11 +80,10 @@ namespace vNet
             return (362880 + x * (362880 + x * (181440 + x * (60480 + x * (15120 + x * (3024 + x * (504 + x * (72 + x * (9 + x))))))))) * 2.75573192e-6;
         }
 
-        public static (float[], float[], string)[][] SplitToMiniBatch((float[],float[],string)[] data, int mBatch)
+        public static (float[], float[], string)[][] SplitToMiniBatch((float[], float[], string)[] data, int mBatch)
         {
-            var batchCount = data.Length/mBatch;
+            var batchCount = data.Length / mBatch;
             var result = new List<(float[], float[], string)[]>();
-
 
             var test = Partitioner.Create(0, mBatch);
 
@@ -90,50 +92,42 @@ namespace vNet
                 result.Add((data.Skip(i * mBatch).Take(mBatch)).ToArray());
             }
 
-            if(data.Length % mBatch != 0)
+            if (data.Length % mBatch != 0)
             {
-                result.Add((data.Skip(batchCount * mBatch).Take(data.Length%mBatch)).ToArray());
+                result.Add((data.Skip(batchCount * mBatch).Take(data.Length % mBatch)).ToArray());
             }
-
 
             return result.ToArray();
         }
 
         public static Input[] DataArrayCreator(string path)
         {
-             Console.WriteLine("Creating dataset from files.. please wait, this may take few seconds");
+            Console.WriteLine("Creating dataset from files.. please wait, this may take few seconds");
 
             ConcurrentBag<Input> Dataset = new ConcurrentBag<Input>();
 
-                        
-                var labels = Directory.GetDirectories(path);
+            var labels = Directory.GetDirectories(path);
 
-               
-                    for (int i = 0; i < labels.Length; i++)
-                    {
-                        // Console.WriteLine(i);
-                        string[] files = Directory.GetFiles(labels[i]);
-                        string labelName = new DirectoryInfo(labels[i]).Name;
+            for (int i = 0; i < labels.Length; i++)
+            {
+                // Console.WriteLine(i);
+                string[] files = Directory.GetFiles(labels[i]);
+                string labelName = new DirectoryInfo(labels[i]).Name;
 
-                        Parallel.ForEach(files, (img) =>
-                        {
-                            var truthLabel = LabelVectorCreator(labels.Length, i);
+                Parallel.ForEach(files, (img) =>
+                {
+                    var truthLabel = LabelVectorCreator(labels.Length, i);
 
-                            Dataset.Add(new Input(ImageToArray(img), truthLabel,  labelName));
-                       
-                        });
-                    }
-                
+                    Dataset.Add(new Input(ImageToArray(img), truthLabel, labelName));
+                });
+            }
 
-
-                return Dataset.ToArray();
-            
-
+            return Dataset.ToArray();
         }
 
-
-
-
+        public static void Plot_Heatmap(List<Result> results)
+        {
+        }
 
         public static List<Input> CSVtoArray(string path)
         {
@@ -166,7 +160,6 @@ namespace vNet
                 temp += a[i] * b[i];
             }
             return temp;
-
         }
 
         public static float[] Multiply2(float[] a, float[] b)
@@ -329,7 +322,7 @@ namespace vNet
                     Color pixel = img.GetPixel(j, i);
                     float color = (pixel.R + pixel.B + pixel.G) / 3;
 
-                    Result[img.Height * i + j] = color/255;
+                    Result[img.Height * i + j] = color / 255;
                 }
             }
             return Result;
@@ -339,7 +332,6 @@ namespace vNet
         {
             var len = (int)Math.Sqrt(img.Length);
 
-
             for (int i = 0; i < len; i++)
             {
                 for (int j = 0; j < len; j++)
@@ -348,7 +340,6 @@ namespace vNet
                 }
                 Console.WriteLine();
             }
-
         }
     }
 }

@@ -16,22 +16,20 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-
 namespace vNet
 {
-    class Program
+    internal class Program
     {
-         static void Main(string[] args)
-       {
+        private static void Main(string[] args)
+        {
             var trainingset = Utils.DataArrayCreator(@"C:\Users\Viert\Downloads\mnist_png.tar\mnist_png\training\");
             var testset = Utils.DataArrayCreator(@"C:\Users\Viert\Downloads\mnist_png.tar\mnist_png\testing\");
             var Dataset = new Dataset(trainingset, testset);
 
             Dataset.Reduce(20);
 
-            var logReg = new LogisticRegression(600, .001f);
+            var logReg = new LogisticRegression(5000000, .01f);
             logReg.TrainModel(Dataset);
-
         }
     }
 }
