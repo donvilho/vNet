@@ -21,7 +21,7 @@ namespace vNet
 
             for (int i = 0; i < Neurons.Length; i++)
             {
-                Neurons[i] = new Neuron(inputLenght);
+                // Neurons[i] = new Neuron(inputLenght);
             }
         }
 

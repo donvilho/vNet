@@ -29,7 +29,7 @@ namespace vNet
 
         private Neuron[] Neurons;
 
-        public LogisticRegression(Dataset dataset)
+        public LogisticRegression(Dataset dataset, bool constInit = false, float initVal = 0.01f)
         {
             HighestResult = 0;
             HighestResultEpoch = 0;
@@ -41,11 +41,11 @@ namespace vNet
 
             for (int i = 0; i < Neurons.Length; i++)
             {
-                Neurons[i] = new Neuron(Data.InputLenght);
+                Neurons[i] = new Neuron(Data.InputLenght, constInit, initVal);
             }
         }
 
-        public void TrainModel(int epoch, float learningRate, int miniBatch = 0)
+        public void TrainModel(int epoch, float learningRate, float momentum = 0, int miniBatch = 1)
         {
             Epoch = epoch;
             LearningRate = learningRate;
@@ -63,7 +63,7 @@ namespace vNet
                 loss = new CrossEntropy();
             }
 
-            Trainer();
+            Trainer(momentum);
 
             Plot.Graph(PlotData, LearningRate, MiniBatch, HighestResultEpoch);
         }
@@ -160,7 +160,7 @@ namespace vNet
             }
         }
 
-        private void Trainer()
+        private void Trainer(float momentum)
         {
             var Output = new float[Classes];
 
@@ -196,7 +196,7 @@ namespace vNet
                     {
                         for (int i = 0; i < Neurons.Length; i++)
                         {
-                            Neurons[i].AdjustWeights(MiniBatch, LearningRate);
+                            Neurons[i].AdjustWeights(MiniBatch, LearningRate, momentum);
                         }
 
                         BatchCount = 0;

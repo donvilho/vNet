@@ -22,13 +22,14 @@ namespace vNet
 
         private bool DeltaSet;
 
-        public Neuron(int connections)
+        public Neuron(int connections, bool constInit, float initVal)
         {
             Z = 0;
             A = 0;
 
             Bias = 1;
-            Weights = Utils.Generate_Vector(connections, setNumber: true, number: 0.01f);
+
+            Weights = Utils.Generate_Vector(connections, setNumber: constInit, number: initVal);
 
             WeightCache = new float[connections];
             Derivates = new float[connections];
@@ -65,7 +66,7 @@ namespace vNet
             }
         }
 
-        public unsafe void AdjustWeights(int mbatch, float learningrate)
+        public unsafe void AdjustWeights(int mbatch, float learningrate, float momentum)
         {
             var len = Weights.Length;
 
@@ -87,12 +88,12 @@ namespace vNet
             {
                 for (int i = 0; i < len; i++)
                 {
-                    var momentum = PrevUpdateRate[i] * 0.5f;
+                    var Mom = PrevUpdateRate[i] * momentum;
                     PrevUpdateRate[i] = (WeightCache[i] / mbatch) * learningrate;
-                    Weights[i] -= PrevUpdateRate[i] + momentum;
+                    Weights[i] -= PrevUpdateRate[i] + Mom;
                     WeightCache[i] = 0;
                 }
-                var BiasMomentum = PrevUpdateBias * 0.5f;
+                var BiasMomentum = PrevUpdateBias * momentum;
                 PrevUpdateBias = (BiasCache / mbatch) * learningrate;
                 Bias -= PrevUpdateBias + BiasMomentum;
                 BiasCache = 0;

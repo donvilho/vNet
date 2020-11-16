@@ -54,7 +54,7 @@
             {
                 for (int j = 0; j < Layers[i].Neurons.Length; j++)
                 {
-                    Layers[i].Neurons[j].AdjustWeights(miniBatch, learningrate);
+                    //  Layers[i].Neurons[j].AdjustWeights(miniBatch, learningrate);
                 }
             }
         }
