@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace vNet
 {
-    internal enum ModelType
+    internal enum IModelType
     {
         Linear,
         Logistic,
@@ -41,10 +41,8 @@ namespace vNet
 
         private Type Type;
 
-
         public NetworkTrainer(int inputSize, List<(int, Activator)> Layers)
         {
-            
             Neurons = new float[Layers.Count][];
             NeuronsBackprop = new float[Layers.Count][];
             NeuronDerivate = new float[Layers.Count][];
@@ -163,11 +161,11 @@ namespace vNet
                 inputs.Shuffle(inputs.TrainingData);
 
                 foreach (var input in inputs.TrainingData)
-                 {
-                //for (int inp = 0; inp < inputs.TrainingData.Length; inp++)
-                //{
+                {
+                    //for (int inp = 0; inp < inputs.TrainingData.Length; inp++)
+                    //{
                     // KEKSI dropout!
-                   // var input = inputs.TrainingData[inp];
+                    // var input = inputs.TrainingData[inp];
 
                     counter++;
                     //Forward
@@ -299,10 +297,9 @@ namespace vNet
                 PlotData[e, 0] = TotalEpochError / inputs.TrainingData.Length;
                 Console.WriteLine(TotalEpochError / inputs.TrainingData.Length);
                 Test(inputs, costFunction);
-                
+
                 Console.ReadKey();
             }
-            Plot.Graph(PlotData,learningRate,miniBatch);
         }
 
         private float[] Multiply(float[] a, float b)
@@ -325,7 +322,7 @@ namespace vNet
                 case CostFunction.MSE:
                     for (int i = 0; i < neuron.Length; i++)
                     {
-                         result[i] = (float)(0.5 * (Math.Pow((y[i] - neuron[i]), 2)));
+                        result[i] = (float)(0.5 * (Math.Pow((y[i] - neuron[i]), 2)));
                         //result[i] = 0.5F * (float)Math.Pow(neuron[i] - y[i], 2);
                     }
                     return result;

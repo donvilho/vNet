@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace vNet
+﻿namespace vNet
 {
-    class Result
+    internal class Result
     {
         public int Position;
         public float ErrorRate;
@@ -14,9 +8,7 @@ namespace vNet
 
         public Result()
         {
-            ErrorRate = 0 ;
-            
+            ErrorRate = 0;
         }
-
     }
 }

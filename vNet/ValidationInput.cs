@@ -1,23 +1,17 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Numerics;
 
 namespace vNet
 {
-    class ValidationInput
+    internal class ValidationInput
     {
         public dynamic[] Data { get; private set; }
 
         public ValidationInput()
         {
-
         }
+
         public ValidationInput(float[] data)
         {
-
             int n = 0;
             var offset = Vector<float>.Count;
             Data = new object[(data.Length / offset)];
@@ -26,7 +20,6 @@ namespace vNet
             {
                 Data[n] = new Vector<float>(data, i);
             }
-
         }
     }
 }

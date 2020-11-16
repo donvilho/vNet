@@ -2,7 +2,7 @@
 
 namespace vNet
 {
-    internal class LinearRegression : IModel
+    internal class LinearRegression : ModelType
     {
         private float[] Weights;
         private float Bias;
@@ -21,12 +21,9 @@ namespace vNet
 
         public float LossFunction(float output, float y, float[] X)
         {
-            
             for (int i = 0; i < X.Length; i++)
             {
-                
             }
-
 
             return (float)(0.5 * (Math.Pow((y - output), 2)));
         }

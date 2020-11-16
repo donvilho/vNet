@@ -100,7 +100,7 @@ namespace vNet
             return result.ToArray();
         }
 
-        public static Input[] DataArrayCreator(string path)
+        public static Input[] DataArrayCreator(string path, int Scale_factor = 1, bool save = false)
         {
             Console.WriteLine("Creating dataset from files.. please wait, this may take few seconds");
 
@@ -116,9 +116,16 @@ namespace vNet
 
                 Parallel.ForEach(files, (img) =>
                 {
-                    var truthLabel = LabelVectorCreator(labels.Length, i);
-
-                    Dataset.Add(new Input(ImageToArray(img), truthLabel, labelName));
+                    if (labels.Length <= 2)
+                    {
+                        var truthLabel = i;
+                        Dataset.Add(new Input(ImageToArray(img, Scale_factor, save), truthLabel, labelName));
+                    }
+                    else
+                    {
+                        var truthLabel = LabelVectorCreator(labels.Length, i);
+                        Dataset.Add(new Input(ImageToArray(img, Scale_factor, save), truthLabel, labelName));
+                    }
                 });
             }
 
@@ -224,7 +231,7 @@ namespace vNet
             return value;
         }
 
-        public static float[] Generate_Vector(int size, double min = 0.1, double max = 0.9)
+        public static float[] Generate_Vector(int size, double min = 0.1, double max = 0.9, bool setNumber = false, float number = 0)
         {
             /// super randomizer
             /// järkyttävä overkill mutta olkoot
@@ -246,7 +253,7 @@ namespace vNet
             float[] Result = new float[size];
             for (int i = 0; i < size; ++i)
             {
-                Result[i] = Convert.ToSingle((rand.NextDouble() * max) - (min));
+                Result[i] = (setNumber ? number : Convert.ToSingle((rand.NextDouble() * max) - (min)));
             }
             random.Dispose();
             random1.Dispose();
@@ -262,57 +269,26 @@ namespace vNet
             return array;
         }
 
-        public static Dataset DatasetCreator(string path)
+        public static float[] ImageToArray(string path, int scale = 1, bool save = false)
         {
-            // Console.WriteLine("Creating dataset from files.. please wait, this may take few seconds");
+            Bitmap img = (Bitmap)Image.FromFile(path);
 
-            ConcurrentBag<Input> TrainingData = new ConcurrentBag<Input>();
-            ConcurrentBag<Input> TestData = new ConcurrentBag<Input>();
+            //Bitmap bm = (Bitmap)Image.FromFile(path);
 
-            try
+            //var fname = Path.GetFileName(path);
+
+            //var dir = Path.GetDirectoryName(path);
+
+            //var img = new Bitmap(bm, new Size(160, 120));
+
+            //var newPath = dir + "\\XSIZE_" + fname;
+            /*
+            if (save)
             {
-                var sets = Directory.GetDirectories(path);
-
-                for (int s = 0; s < sets.Length; s++)
-                {
-                    string setName = new DirectoryInfo(sets[s]).Name;
-
-                    var labels = Directory.GetDirectories(sets[s]);
-
-                    for (int i = 0; i < labels.Length; i++)
-                    {
-                        // Console.WriteLine(i);
-                        string[] files = Directory.GetFiles(labels[i]);
-                        string label = new DirectoryInfo(labels[i]).Name;
-
-                        Parallel.ForEach(files, (img) =>
-                        {
-                            var truthLabel = LabelVectorCreator(labels.Length, i);
-
-                            if (setName.Contains("training"))
-                            {
-                                TrainingData.Add(new Input(truthLabel, ImageToArray(img), label));
-                            }
-                            else
-                            {
-                                TestData.Add(new Input(truthLabel, ImageToArray(img), label));
-                            }
-                        });
-                    }
-                }
-                GC.Collect();
-                return new Dataset(TrainingData.ToArray(), TestData.ToArray());
+                img.Save(newPath);
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                return new Dataset(TrainingData.ToArray(), TestData.ToArray());
-            }
-        }
+            */
 
-        public static float[] ImageToArray(string Path)
-        {
-            Bitmap img = (Bitmap)Image.FromFile(Path);
             float[] Result = new float[img.Height * img.Width];
 
             for (int i = 0; i <= img.Height - 1; i++)

@@ -1,29 +1,19 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace vNet
 {
-    class Dataset
+    internal class Dataset
     {
-
         public Input[] TrainingData { get; private set; }
         public Input[] ValidationgData { get; private set; }
         public int InputLenght { get; private set; }
-        public int OutputLenght { get; private set; }
+        public int classCount { get; private set; }
 
         public Dataset(Input[] dataset)
         {
             Shuffle(dataset);
-            ValidationgData = dataset.Take((int)((float)dataset.Length*0.2f)).ToArray();
+            ValidationgData = dataset.Take((int)((float)dataset.Length * 0.2f)).ToArray();
             TrainingData = dataset.Skip((int)((float)dataset.Length * 0.2f)).ToArray();
             InputLenght = TrainingData[0].Data.Length;
             Normalize();
@@ -34,7 +24,7 @@ namespace vNet
             TrainingData = training;
             ValidationgData = test;
             InputLenght = TrainingData[0].Data.Length;
-            OutputLenght = TrainingData[0].TruthLabel.Length;
+            classCount = TrainingData[0].TruthLabel.Length;
         }
 
         public void Reduce(int value)
@@ -44,7 +34,6 @@ namespace vNet
             Shuffle(ValidationgData);
             ValidationgData = ValidationgData.Take((ValidationgData.Length / 100) * value).ToArray();
         }
-
 
         public void Shuffle(Input[] Array)
         {
@@ -56,7 +45,6 @@ namespace vNet
                 Array[i] = Array[Count];
                 Array[Count] = value;
             }
-      
         }
 
         private void Normalize()
@@ -69,7 +57,7 @@ namespace vNet
                 for (int j = 0; j < TrainingData[i].Data.Length; j++)
                 {
                     colsMean[j] += TrainingData[i].Data[j];
-                    if(colsMax[j] < TrainingData[i].Data[j])
+                    if (colsMax[j] < TrainingData[i].Data[j])
                     {
                         colsMax[j] = TrainingData[i].Data[j];
                     }
@@ -85,16 +73,10 @@ namespace vNet
             {
                 for (int j = 0; j < TrainingData[i].Data.Length; j++)
                 {
-
                     TrainingData[i].Data[j] -= colsMean[j];
                     TrainingData[i].Data[j] /= colsMax[j];
-
                 }
-
             }
-
-
         }
-
     }
 }

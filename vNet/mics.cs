@@ -1,17 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace vNet
+﻿namespace vNet
 {
-    class mics
+    internal class mics
     {
         /*
      public float Forward((float[], float[], string) input)
      {
-
          var ExpSum = 0f;
 
          for (int i = 0; i < Neurons.Length; i++)
@@ -22,7 +15,6 @@ namespace vNet
          }
 
          return ExpSum;
-
      }
      */
 
@@ -65,7 +57,6 @@ namespace vNet
                         Error[i] = (float)Math.Exp(Neurons[i]) / ExpSum;
                         Loss += input.Item2[i] * (float)Math.Log(Error[i]);
 
-
                         Derivate[i] = (Error[i] - input.Item2[i]) * Error[i] * (1 - Error[i]);
                         //Derivate[i] *= Error[i] * (1 - Error[i]);
 
@@ -81,7 +72,7 @@ namespace vNet
                     Parallel.For(0, Derivate.Length, Kernel);
                     break;
             }
-                
+
             return Loss;
         }
         */

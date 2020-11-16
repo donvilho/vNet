@@ -1,14 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace vNet
 {
-    class ParallelTest
+    internal class ParallelTest
     {
-
         public static unsafe void PTest()
         {
             var timer = new System.Diagnostics.Stopwatch();
@@ -35,9 +31,5 @@ namespace vNet
             Console.WriteLine(timer.ElapsedMilliseconds);
             Console.ReadKey();
         }
-
-
-     
-
     }
 }
