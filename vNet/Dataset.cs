@@ -16,7 +16,7 @@ namespace vNet
             ValidationgData = dataset.Take((int)((float)dataset.Length * 0.2f)).ToArray();
             TrainingData = dataset.Skip((int)((float)dataset.Length * 0.2f)).ToArray();
             InputLenght = TrainingData[0].Data.Length;
-            Normalize();
+            Normalize_Datasets();
         }
 
         public Dataset(Input[] training, Input[] test)
@@ -47,34 +47,19 @@ namespace vNet
             }
         }
 
-        private void Normalize()
+        public void Normalize_Datasets()
         {
-            var colsMean = new float[TrainingData[0].Data.Length];
-            var colsMax = new float[TrainingData[0].Data.Length];
+            Normalize(TrainingData);
+            Normalize(ValidationgData);
+        }
 
-            for (int i = 0; i < TrainingData.Length; i++)
+        private void Normalize(Input[] data)
+        {
+            for (int i = 0; i < data.Length; i++)
             {
-                for (int j = 0; j < TrainingData[i].Data.Length; j++)
+                for (int j = 0; j < data[i].Data.Length; j++)
                 {
-                    colsMean[j] += TrainingData[i].Data[j];
-                    if (colsMax[j] < TrainingData[i].Data[j])
-                    {
-                        colsMax[j] = TrainingData[i].Data[j];
-                    }
-                }
-            }
-
-            for (int i = 0; i < colsMean.Length; i++)
-            {
-                colsMean[i] /= TrainingData.Length;
-            }
-
-            for (int i = 0; i < TrainingData.Length; i++)
-            {
-                for (int j = 0; j < TrainingData[i].Data.Length; j++)
-                {
-                    TrainingData[i].Data[j] -= colsMean[j];
-                    TrainingData[i].Data[j] /= colsMax[j];
+                    data[i].Data[j] = data[i].Data[j] > 200 ? 1 : 0;
                 }
             }
         }

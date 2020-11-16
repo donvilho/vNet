@@ -29,15 +29,16 @@ namespace vNet
 
         private Neuron[] Neurons;
 
-        public LogisticRegression(Dataset dataset, bool constInit = false, float initVal = 0.01f)
+        public LogisticRegression(Dataset dataset, bool constInit = false, float initVal = 1f)
         {
             HighestResult = 0;
             HighestResultEpoch = 0;
-            Output = new float[Classes];
+
             Data = dataset;
             Classes = dataset.classCount;
             Heatmap = new List<(int, int)>();
             Neurons = new Neuron[Classes];
+            Output = new float[Classes];
 
             for (int i = 0; i < Neurons.Length; i++)
             {
@@ -45,7 +46,7 @@ namespace vNet
             }
         }
 
-        public void TrainModel(int epoch, float learningRate, float momentum = 0, int miniBatch = 1)
+        public void TrainModel(int epoch, float learningRate, float momentum = 0, int miniBatch = 1, bool validatewithTS = false)
         {
             Epoch = epoch;
             LearningRate = learningRate;
@@ -63,15 +64,21 @@ namespace vNet
                 loss = new CrossEntropy();
             }
 
-            Trainer(momentum);
+            Trainer(momentum, validatewithTS);
 
             Plot.Graph(PlotData, LearningRate, MiniBatch, HighestResultEpoch);
         }
 
-        private void TestModel(int epoch, bool plot = false)
+        private void TestModel(int epoch, bool validateWithTrainingSet, bool plot = false)
         {
             var Prediction = new float[Classes];
             var classcount = new int[Classes];
+
+            var TestPlot = new double[Classes, Classes];
+            var testx = new List<int>();
+            var testy = new List<int>();
+
+            var ValidationSet = (validateWithTrainingSet == true ? Data.TrainingData : Data.ValidationgData);
 
             if (plot)
             {
@@ -81,7 +88,7 @@ namespace vNet
                 var defaultMarker = 10;
                 Heatmap.Clear();
 
-                foreach (var input in Data.ValidationgData)
+                foreach (var input in ValidationSet)
                 {
                     //forward
                     for (int i = 0; i < Neurons.Length; i++)
@@ -99,8 +106,24 @@ namespace vNet
                     classcount[yPos]++;
 
                     Heatmap.Add((yPos, position));
+                    TestPlot[yPos, position]++;
+
+                    testx.Add(yPos);
+                    testy.Add(position);
                 }
 
+                /*
+                for (int i = 0; i < TestPlot.GetLength(0); i++)
+                {
+                    for (int j = 0; j < TestPlot.GetLength(1); j++)
+                    {
+                        var multiplier = TestPlot[i, j] / classcount[i];
+                        plt.PlotPoint(i, j, markerSize: 50 * multiplier, color: Color.Green);
+                    }
+                }
+                */
+
+                /*
                 foreach (var item in Heatmap)
                 {
                     if (item.Item1 == item.Item2)
@@ -116,17 +139,39 @@ namespace vNet
                         plt.PlotPoint(item.Item1, item.Item2, markerSize: marker, color: Color.Black);
                     }
                 }
+                */
+
+                //TestPlot[5, 5] = 0;
+
+                //var intesi = ScottPlot.Tools.XYToIntensities(ScottPlot.Tools.IntensityMode.gaussian, testx.ToArray(), testy.ToArray(), 50, 50, 4);
+
+                var plottables = plt.GetPlottables();
+
+                for (int i = 0; i < TestPlot.GetLength(0); i++)
+                {
+                    for (int j = 0; j < TestPlot.GetLength(1); j++)
+                    {
+                        var multiplier = Math.Round(TestPlot[i, j] / classcount[i], 2);
+
+                        plottables.Add(new ScottPlot.PlottableText(multiplier.ToString(), i, j,
+                            color: Color.Black, fontName: "arial", fontSize: 15,
+                            bold: (i == j ? true : false), label: "", alignment: ScottPlot.TextAlignment.middleCenter,
+                            rotation: 0, frame: false, frameColor: Color.Green));
+                    }
+                }
+
+                //plt.PlotHeatmap(intesi);
 
                 plt.Grid(xSpacing: 1, ySpacing: 1);
-                plt.SaveFig("Experimental_Heatmap_HeatmapImage.png");
-                Process.Start(new ProcessStartInfo("Experimental_Heatmap_HeatmapImage.png") { UseShellExecute = true });
+                plt.SaveFig("HeatmapImage.png");
+                Process.Start(new ProcessStartInfo("HeatmapImage.png") { UseShellExecute = true });
             }
             else
             {
                 var Loss = 0f;
                 var Accuracy = 0f;
 
-                foreach (var input in Data.ValidationgData)
+                foreach (var input in ValidationSet)
                 {
                     //forward
                     for (int i = 0; i < Neurons.Length; i++)
@@ -146,7 +191,7 @@ namespace vNet
                     Accuracy += position == yPos ? 1 : 0;
                 }
 
-                Acc = (float)Accuracy / Data.ValidationgData.Length;
+                Acc = (float)Accuracy / ValidationSet.Length;
 
                 if (Acc > HighestResult)
                 {
@@ -154,16 +199,14 @@ namespace vNet
                     HighestResultEpoch = epoch;
                 }
 
-                PlotData[epoch, 0] = Loss / Data.ValidationgData.Length;
+                PlotData[epoch, 0] = Loss / ValidationSet.Length;
                 PlotData[epoch, 1] = Acc;
-                Console.WriteLine("Epoch: " + epoch + " Acccuracy: " + Acc + " Error: " + Loss / Data.ValidationgData.Length);
+                Console.WriteLine("Epoch: " + epoch + " Acccuracy: " + Acc + " Loss: " + Loss / ValidationSet.Length);
             }
         }
 
-        private void Trainer(float momentum)
+        private void Trainer(float momentum, bool validateWithTrainingSet)
         {
-            var Output = new float[Classes];
-
             if (MiniBatch == 0) { MiniBatch = Data.TrainingData.Length; }
 
             int BatchCount = 0;
@@ -182,11 +225,19 @@ namespace vNet
                         Neurons[i].ForwardCalculation(input.Data);
                     }
 
+                    //prediction
                     Output = activation.Activate(Neurons);
+
+                    //var pos = Output.ToList().IndexOf(Output.Max());
+
+                    //var pred = new float[Classes];
+
+                    //pred[pos] = 1;
 
                     for (int i = 0; i < Neurons.Length; i++)
                     {
                         Neurons[i].Derivate = activation.Derivate(Output[i], input.TruthLabel[i]);
+                        //Neurons[i].Derivate = activation.Derivate(pred[i], input.TruthLabel[i]);
                         Neurons[i].Backpropagate(input.Data);
                     }
 
@@ -203,10 +254,10 @@ namespace vNet
                     }
                 }
 
-                TestModel(e);
+                TestModel(e, validateWithTrainingSet, plot: false);
             }
 
-            TestModel(Epoch, true);
+            TestModel(Epoch, validateWithTrainingSet, plot: true);
         }
     }
 }

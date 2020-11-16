@@ -12,7 +12,7 @@
 
             var Model = new LogisticRegression(Dataset, constInit: true);
 
-            Model.TrainModel(epoch: 300, learningRate: 0.001f, momentum: 1f, miniBatch: 256);
+            Model.TrainModel(epoch: 300, learningRate: .1f, momentum: 0.1f, miniBatch: 128, validatewithTS: false);
 
             //Model.TrainModel(epoch: 300, learningRate: 0.01f, momentum: 1f, miniBatch: 256); //OK veto
         }

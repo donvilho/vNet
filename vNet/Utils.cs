@@ -298,7 +298,8 @@ namespace vNet
                     Color pixel = img.GetPixel(j, i);
                     float color = (pixel.R + pixel.B + pixel.G) / 3;
 
-                    Result[img.Height * i + j] = color / 255;
+                    //Result[img.Height * i + j] = color;
+                    Result[img.Height * i + j] = color / 254;
                 }
             }
             return Result;
