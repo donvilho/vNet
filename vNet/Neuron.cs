@@ -24,6 +24,8 @@ namespace vNet
 
         private bool DeltaSet;
 
+        public int[] ConnectionPattern;
+
         public Neuron(int connections, bool constInit, float initVal)
         {
             Z = 0;
@@ -36,6 +38,22 @@ namespace vNet
             PrevUpdateRate = new float[connections];
             PrevUpdateBias = 0;
             DeltaSet = false;
+            ConnectionPattern = null;
+        }
+
+        public Neuron(int[] connectionPattern, bool constInit, float initVal)
+        {
+            Z = 0;
+            A = 0;
+            Bias = 1;
+            Weights = Utils.Generate_Vector(connectionPattern.Length, setNumber: constInit, number: initVal);
+            WeightCache = new float[connectionPattern.Length];
+            Derivates = new float[connectionPattern.Length];
+            BiasCache = 0;
+            PrevUpdateRate = new float[connectionPattern.Length];
+            PrevUpdateBias = 0;
+            DeltaSet = false;
+            ConnectionPattern = connectionPattern;
         }
 
         public void ForwardCalculation(float[] input)
@@ -43,9 +61,19 @@ namespace vNet
             Z = 0f;
             Z += Bias;
 
-            for (int i = 0; i < Weights.Length; i++)
+            if (ConnectionPattern != null)
             {
-                Z += (input[i] * Weights[i]);
+                for (int i = 0; i < ConnectionPattern.Length; i++)
+                {
+                    Z += (input[ConnectionPattern[i]] * Weights[i]);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < Weights.Length; i++)
+                {
+                    Z += (input[i] * Weights[i]);
+                }
             }
         }
 

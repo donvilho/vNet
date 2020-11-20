@@ -11,7 +11,7 @@ namespace vNet
     internal class LogisticRegression : ModelType
     {
         private int Epoch;
-        private float LearningRate;
+        private float LearningRate, Momentum;
         private int MiniBatch;
         private double[,] PlotData;
         private List<(int, int)> Heatmap;
@@ -23,13 +23,13 @@ namespace vNet
         private Loss loss;
 
         private float HighestResult;
-        private int HighestResultEpoch;
+        private int HighestResultEpoch, DropOutThreshold;
 
         private Dataset Data;
 
         private Neuron[] Neurons;
 
-        public LogisticRegression(Dataset dataset, bool constInit = false, float initVal = 1f)
+        public LogisticRegression(Dataset dataset, int DropoutThreshold = 0, bool constInit = false, float initVal = 1f)
         {
             HighestResult = 0;
             HighestResultEpoch = 0;
@@ -40,9 +40,40 @@ namespace vNet
             Neurons = new Neuron[Classes];
             Output = new float[Classes];
 
-            for (int i = 0; i < Neurons.Length; i++)
+            if (DropoutThreshold > 0)
             {
-                Neurons[i] = new Neuron(Data.InputLenght, constInit, initVal);
+                DropOutThreshold = DropoutThreshold;
+                var temp = new List<int>();
+                var interMidLayer = new int[dataset.InputLenght];
+
+                for (int i = 0; i < dataset.TrainingData.Length; i++)
+                {
+                    for (int j = 0; j < dataset.InputLenght; j++)
+                    {
+                        interMidLayer[j] += dataset.TrainingData[i].Data[j] > 0 ? 1 : 0;
+                    }
+                }
+                for (int i = 0; i < interMidLayer.Length; i++)
+                {
+                    if (interMidLayer[i] > DropoutThreshold)
+                    {
+                        temp.Add(i);
+                    }
+                }
+
+                var ConnectionPattern = temp.ToArray();
+
+                for (int i = 0; i < Neurons.Length; i++)
+                {
+                    Neurons[i] = new Neuron(ConnectionPattern.Length, constInit, initVal);
+                }
+            }
+            else
+            {
+                for (int i = 0; i < Neurons.Length; i++)
+                {
+                    Neurons[i] = new Neuron(Data.InputLenght, constInit, initVal);
+                }
             }
         }
 
@@ -50,8 +81,11 @@ namespace vNet
         {
             Epoch = epoch;
             LearningRate = learningRate;
+            Momentum = momentum;
             MiniBatch = miniBatch;
             PlotData = new double[Epoch, 2];
+
+            if (MiniBatch == 0) { MiniBatch = Data.TrainingData.Length; }
 
             if (Classes > 2)
             {
@@ -64,7 +98,16 @@ namespace vNet
                 loss = new CrossEntropy();
             }
 
-            Trainer(momentum, validatewithTS);
+            Console.WriteLine("-----Starting training-----\n" +
+                "<-Parameters->\n" +
+                "Epoch: {0}\n" +
+                "Batchsize: {3}\n" +
+                "Learningrate: {1}\n" +
+                "Momentum: {4}\n" +
+                "Dropout threshold: {2}\n",
+                Epoch, LearningRate, DropOutThreshold, MiniBatch, Momentum);
+
+            Trainer(Momentum, validatewithTS);
 
             Plot.Graph(PlotData, LearningRate, MiniBatch, HighestResultEpoch);
         }
@@ -153,10 +196,13 @@ namespace vNet
                     {
                         var multiplier = Math.Round(TestPlot[i, j] / classcount[i], 2);
 
-                        plottables.Add(new ScottPlot.PlottableText(multiplier.ToString(), i, j,
+                        if (multiplier > 0)
+                        {
+                            plottables.Add(new ScottPlot.PlottableText(multiplier.ToString(), i, j,
                             color: Color.Black, fontName: "arial", fontSize: 15,
                             bold: (i == j ? true : false), label: "", alignment: ScottPlot.TextAlignment.middleCenter,
                             rotation: 0, frame: false, frameColor: Color.Green));
+                        }
                     }
                 }
 
@@ -191,7 +237,7 @@ namespace vNet
                     Accuracy += position == yPos ? 1 : 0;
                 }
 
-                Acc = (float)Accuracy / ValidationSet.Length;
+                Acc = (float)Math.Round(Accuracy / ValidationSet.Length, 3);
 
                 if (Acc > HighestResult)
                 {
@@ -201,23 +247,18 @@ namespace vNet
 
                 PlotData[epoch, 0] = Loss / ValidationSet.Length;
                 PlotData[epoch, 1] = Acc;
-                Console.WriteLine("Epoch: " + epoch + " Acccuracy: " + Acc + " Loss: " + Loss / ValidationSet.Length);
+                Console.WriteLine("E: " + epoch + " Loss: " + Loss / ValidationSet.Length + " Acc: " + Acc);
             }
         }
 
         private void Trainer(float momentum, bool validateWithTrainingSet)
         {
-            var timer = new Stopwatch();
-
-            if (MiniBatch == 0) { MiniBatch = Data.TrainingData.Length; }
-
             int BatchCount = 0;
 
             // Main Loop
 
             for (int e = 0; e < Epoch; e++)
             {
-                timer.Restart();
                 Data.Shuffle(Data.TrainingData);
 
                 //Training loop
@@ -258,12 +299,9 @@ namespace vNet
                 }
 
                 TestModel(e, validateWithTrainingSet, plot: false);
-
-                timer.Stop();
-                Console.WriteLine(timer.ElapsedMilliseconds);
             }
 
-            TestModel(Epoch, validateWithTrainingSet, plot: true);
+            TestModel(Epoch, validateWithTrainingSet: false, plot: true);
         }
     }
 }
