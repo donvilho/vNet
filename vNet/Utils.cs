@@ -446,7 +446,6 @@ namespace vNet
                 img.Save(newPath);
             }
             */
-
             float[] Result = new float[img.Height * img.Width];
 
             for (int i = 0; i <= img.Height - 1; i++)

@@ -63,5 +63,28 @@ namespace vNet
                 }
             }
         }
+
+        public void ApplyConnectionMask(int[] mask)
+        {
+            for (int i = 0; i < TrainingData.Length; i++)
+            {
+                var newInput = new float[mask.Length];
+                for (int j = 0; j < mask.Length; j++)
+                {
+                    newInput[j] = TrainingData[i].Data[mask[j]];
+                }
+                TrainingData[i].Data = newInput;
+            }
+
+            for (int i = 0; i < ValidationgData.Length; i++)
+            {
+                var newInput = new float[mask.Length];
+                for (int j = 0; j < mask.Length; j++)
+                {
+                    newInput[j] = ValidationgData[i].Data[mask[j]];
+                }
+                ValidationgData[i].Data = newInput;
+            }
+        }
     }
 }

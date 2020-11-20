@@ -2,9 +2,9 @@
 {
     internal struct Input
     {
-        public float[] TruthLabel { get; private set; }
-        public float[] Data { get; private set; }
-        public string LabelName { get; private set; }
+        public float[] TruthLabel { get; set; }
+        public float[] Data { get; set; }
+        public string LabelName { get; set; }
 
         public Input(float[] data, float[] y, string labelname)
         {

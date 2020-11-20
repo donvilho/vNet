@@ -16,7 +16,7 @@ namespace vNet
 
             //Dataset.Reduce(30);
 
-            var Model = new LogisticRegression(Dataset, DropoutThreshold: 1, constInit: true);
+            var Model = new LogisticRegression(Dataset, DropoutThreshold: 2000, constInit: true);
             Model.TrainModel(epoch: 100, learningRate: .1f, momentum: 0.5f, miniBatch: 256, validatewithTS: false);
 
             //var Model = new LogisticRegression(Dataset, DropoutThreshold: 200, constInit: true);

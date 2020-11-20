@@ -65,8 +65,10 @@ namespace vNet
 
                 for (int i = 0; i < Neurons.Length; i++)
                 {
-                    Neurons[i] = new Neuron(ConnectionPattern.Length, constInit, initVal);
+                    Neurons[i] = new Neuron(ConnectionPattern, constInit, initVal);
                 }
+
+                Data.ApplyConnectionMask(ConnectionPattern);
             }
             else
             {
