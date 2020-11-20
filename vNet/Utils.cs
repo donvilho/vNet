@@ -212,7 +212,7 @@ namespace vNet
                     else
                     {
                         var truthLabel = LabelVectorCreator(labels.Length, i);
-                        Dataset.Add(new Input(ImageToArray(img, Scale_factor, save), truthLabel, labelName));
+                        Dataset.Add(new Input(ImageToArray(img, Scale_factor, save), truthLabel, labelName, img));
                     }
                 });
             }

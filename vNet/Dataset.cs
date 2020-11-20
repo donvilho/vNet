@@ -27,7 +27,7 @@ namespace vNet
             classCount = TrainingData[0].TruthLabel.Length;
         }
 
-        public void Reduce(int value)
+        public void ReduceToPercentage(int value)
         {
             Shuffle(TrainingData);
             TrainingData = TrainingData.Take((TrainingData.Length / 100) * value).ToArray();
