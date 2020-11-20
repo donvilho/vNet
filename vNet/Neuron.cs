@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Threading.Tasks;
 using vNet.Activations;
 
 namespace vNet
@@ -26,16 +28,11 @@ namespace vNet
         {
             Z = 0;
             A = 0;
-
             Bias = 1;
-
             Weights = Utils.Generate_Vector(connections, setNumber: constInit, number: initVal);
-
             WeightCache = new float[connections];
             Derivates = new float[connections];
-
             BiasCache = 0;
-
             PrevUpdateRate = new float[connections];
             PrevUpdateBias = 0;
             DeltaSet = false;
@@ -46,18 +43,27 @@ namespace vNet
             Z = 0f;
             Z += Bias;
 
-            if (input.Length == Weights.Length)
+            for (int i = 0; i < Weights.Length; i++)
             {
-                for (int i = 0; i < Weights.Length; i++)
-                {
-                    Z += (input[i] * Weights[i]);
-                }
+                Z += (input[i] * Weights[i]);
             }
         }
 
         public void Backpropagate(float[] inputToNeuron)
         {
             BiasCache += Bias * Derivate;
+
+            var partitioner = Partitioner.Create(0, WeightCache.Length);
+            /*
+            Parallel.ForEach(partitioner, range =>
+            {
+                for (int i = range.Item1; i < range.Item2; i++)
+                {
+                    WeightCache[i] += (inputToNeuron[i] * Derivate);
+                    Derivates[i] = Weights[i] * Derivate;
+                }
+            });
+            */
 
             for (int i = 0; i < WeightCache.Length; i++)
             {
@@ -66,7 +72,7 @@ namespace vNet
             }
         }
 
-        public unsafe void AdjustWeights(int mbatch, float learningrate, float momentum)
+        public void AdjustWeights(int mbatch, float learningrate, float momentum)
         {
             var len = Weights.Length;
 

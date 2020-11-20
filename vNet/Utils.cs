@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 
@@ -43,6 +44,26 @@ namespace vNet
         {
             float k = (float)Math.Exp(value);
             return k / (1.0f + k);
+        }
+
+        public static float SimdVectorProd(float[] left, float right)
+        {
+            var offset = Vector<float>.Count;
+            float[] result = new float[left.Length];
+            int i = 0;
+            for (i = 0; i < left.Length; i += offset)
+            {
+                var v1 = new Vector<float>(left, i);
+                (v1 * right).CopyTo(result, i);
+            }
+
+            //remaining items
+            for (; i < left.Length; ++i)
+            {
+                result[i] = left[i] * right;
+            }
+
+            return result.Sum();
         }
 
         public static double exp1(double x)
@@ -98,6 +119,73 @@ namespace vNet
             }
 
             return result.ToArray();
+        }
+
+        public static void ShuffleDataMatrix((float[,], int[,]) Data)
+        {
+            var rand = new Random();
+            for (int i = Data.Item1.GetLength(0) - 1; i > 1; i--)
+            {
+                int d = rand.Next(i + 1);
+
+                for (int j = 0; j < Data.Item1.GetLength(1); j++)
+                {
+                    var value = Data.Item1[i, j];
+                    Data.Item1[i, j] = Data.Item1[d, j];
+                    Data.Item1[d, j] = value;
+                }
+            }
+        }
+
+        public static (float[,], int[,]) CreateDataMatrix(string path, int ReduceSizeTo = 100)
+        {
+            Console.WriteLine("Creating dataset from files.. please wait, this may take few seconds");
+
+            var labels = Directory.GetDirectories(path);
+
+            var allFiles = Directory.GetFiles(path, "*", SearchOption.AllDirectories);
+            var imageSize = Image.FromFile(allFiles[0]);
+
+            // Shuffle
+
+            if (ReduceSizeTo < 100)
+            {
+                var rand = new Random();
+                for (int Count = allFiles.Length - 1; Count > 1; Count--)
+                {
+                    int i = rand.Next(Count + 1);
+                    var value = allFiles[i];
+                    allFiles[i] = allFiles[Count];
+                    allFiles[Count] = value;
+                }
+
+                var temp = allFiles.Take(allFiles.Length / 100 * ReduceSizeTo);
+
+                allFiles = temp.ToArray();
+            }
+
+            var DataMatrix = new float[allFiles.Length, (imageSize.Width * imageSize.Height)];
+            var TruthMatrix = new int[allFiles.Length, labels.Length];
+
+            Parallel.For(0, DataMatrix.GetLength(0), i =>
+            {
+                TruthMatrix[i, int.Parse(new DirectoryInfo(allFiles[i]).Parent.Name)] = 1;
+
+                var img = (Bitmap)Image.FromFile(allFiles[i]);
+
+                for (int j = 0; j < img.Height; j++)
+                {
+                    for (int k = 0; k < img.Width; k++)
+                    {
+                        Color color = img.GetPixel(j, k);
+                        DataMatrix[i, (j * img.Width) + k] = ((color.R + color.G + color.B) / 3) / 254;
+                    }
+                }
+
+                img.Dispose();
+            });
+
+            return (DataMatrix, TruthMatrix);
         }
 
         public static Input[] DataArrayCreator(string path, int Scale_factor = 1, bool save = false)
@@ -169,6 +257,21 @@ namespace vNet
             return temp;
         }
 
+        public static float[] Dot(float[,] a, float[] b)
+        {
+            var temp = new float[a.GetLength(0)];
+
+            for (int i = 0; i < a.GetLength(0); i++)
+            {
+                for (int j = 0; j < a.GetLength(1); j++)
+                {
+                    temp[i] += a[i, j] * b[j];
+                }
+                //temp += a[i] * b[i];
+            }
+            return temp;
+        }
+
         public static float[] Multiply2(float[] a, float[] b)
         {
             var result = new float[a.Length * b.Length];
@@ -231,7 +334,7 @@ namespace vNet
             return value;
         }
 
-        public static float[] Generate_Vector(int size, double min = 0.1, double max = 0.9, bool setNumber = false, float number = 0)
+        public static float[] Generate_Vector(int size, bool incrementInt = false, double min = 0.1, double max = 0.9, bool setNumber = false, float number = 0)
         {
             /// super randomizer
             /// järkyttävä overkill mutta olkoot
@@ -251,9 +354,64 @@ namespace vNet
             Random rand = new Random(BitConverter.ToInt32(Bytes, 0) + BitConverter.ToInt32(Bytes1, 0) - BitConverter.ToInt32(Bytes2, 0));
 
             float[] Result = new float[size];
+
+            int count = 0;
+
             for (int i = 0; i < size; ++i)
             {
-                Result[i] = (setNumber ? number : Convert.ToSingle((rand.NextDouble() * max) - (min)));
+                if (incrementInt)
+                {
+                    Result[i] = count;
+                    count++;
+                }
+                else
+                {
+                    Result[i] = (setNumber ? number : Convert.ToSingle((rand.NextDouble() * max) - (min)));
+                }
+            }
+            random.Dispose();
+            random1.Dispose();
+            random2.Dispose();
+            return Result;
+        }
+
+        public static float[,] GenerateMatrix(int x, int y, double min = 0.1, double max = 0.9, bool incrementInt = false, bool setNumber = false, float number = 0)
+        {
+            /// super randomizer
+            /// järkyttävä overkill mutta olkoot
+
+            RNGCryptoServiceProvider random = new RNGCryptoServiceProvider();
+            var Bytes = new byte[4];
+            random.GetBytes(Bytes);
+
+            RNGCryptoServiceProvider random1 = new RNGCryptoServiceProvider();
+            var Bytes1 = new byte[4];
+            random1.GetBytes(Bytes1);
+
+            RNGCryptoServiceProvider random2 = new RNGCryptoServiceProvider();
+            var Bytes2 = new byte[4];
+            random2.GetBytes(Bytes2);
+
+            Random rand = new Random(BitConverter.ToInt32(Bytes, 0) + BitConverter.ToInt32(Bytes1, 0) - BitConverter.ToInt32(Bytes2, 0));
+
+            float[,] Result = new float[x, y];
+
+            int count = 0;
+
+            for (int i = 0; i < x; ++i)
+            {
+                for (int j = 0; j < y; j++)
+                {
+                    if (incrementInt)
+                    {
+                        Result[i, j] = count;
+                        count++;
+                    }
+                    else
+                    {
+                        Result[i, j] = (setNumber ? number : Convert.ToSingle((rand.NextDouble() * max) - (min)));
+                    }
+                }
             }
             random.Dispose();
             random1.Dispose();
@@ -302,6 +460,9 @@ namespace vNet
                     Result[img.Height * i + j] = color / 254;
                 }
             }
+
+            img.Dispose();
+
             return Result;
         }
 

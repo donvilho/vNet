@@ -207,6 +207,8 @@ namespace vNet
 
         private void Trainer(float momentum, bool validateWithTrainingSet)
         {
+            var timer = new Stopwatch();
+
             if (MiniBatch == 0) { MiniBatch = Data.TrainingData.Length; }
 
             int BatchCount = 0;
@@ -215,6 +217,7 @@ namespace vNet
 
             for (int e = 0; e < Epoch; e++)
             {
+                timer.Restart();
                 Data.Shuffle(Data.TrainingData);
 
                 //Training loop
@@ -255,6 +258,9 @@ namespace vNet
                 }
 
                 TestModel(e, validateWithTrainingSet, plot: false);
+
+                timer.Stop();
+                Console.WriteLine(timer.ElapsedMilliseconds);
             }
 
             TestModel(Epoch, validateWithTrainingSet, plot: true);

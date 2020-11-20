@@ -1,4 +1,10 @@
-﻿namespace vNet
+﻿using System;
+using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Numerics;
+using System.Threading.Tasks;
+
+namespace vNet
 {
     internal class Program
     {
@@ -11,9 +17,7 @@
             Dataset.Reduce(30);
 
             var Model = new LogisticRegression(Dataset, constInit: true);
-
             Model.TrainModel(epoch: 300, learningRate: .1f, momentum: 0.1f, miniBatch: 128, validatewithTS: false);
-
             //Model.TrainModel(epoch: 300, learningRate: 0.01f, momentum: 1f, miniBatch: 256); //OK veto
         }
     }

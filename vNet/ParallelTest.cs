@@ -5,7 +5,7 @@ namespace vNet
 {
     internal class ParallelTest
     {
-        public static unsafe void PTest()
+        public static void PTest()
         {
             var timer = new System.Diagnostics.Stopwatch();
 

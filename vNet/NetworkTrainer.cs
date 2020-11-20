@@ -57,7 +57,7 @@ namespace vNet
                 Neurons[i] = new float[Layers[i].Item1];
                 NeuronsBackprop[i] = new float[Layers[i].Item1];
                 NeuronDerivate[i] = new float[Layers[i].Item1];
-                Bias[i] = Utils.Generate_Vector(Layers[i].Item1, 0.1, 0.9);
+                Bias[i] = Utils.Generate_Vector(Layers[i].Item1, min: 0.1, max: 0.9);
                 BiasCache[i] = new float[Layers[i].Item1];
                 Weights[i] = new float[Layers[i].Item1][];
                 WeightCache[i] = new float[Layers[i].Item1][];
@@ -70,12 +70,12 @@ namespace vNet
                 {
                     if (i == 0)
                     {
-                        Weights[i][j] = Utils.Generate_Vector(inputSize, 0.1, 0.9);
+                        Weights[i][j] = Utils.Generate_Vector(inputSize, min: 0.1, max: 0.9);
                         WeightCache[i][j] = new float[inputSize];
                     }
                     else
                     {
-                        Weights[i][j] = Utils.Generate_Vector(Layers[i - 1].Item1, 0.1, 0.9);
+                        Weights[i][j] = Utils.Generate_Vector(Layers[i - 1].Item1, min: 0.1, max: 0.9);
                         WeightCache[i][j] = new float[Layers[i - 1].Item1];
                     }
                 }
