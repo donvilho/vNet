@@ -8,25 +8,19 @@ namespace vNet
 {
     internal class Neuron
     {
+        //publics
         public float Derivate, A, Z;
-        private int Offset;
-
-        private float Bias;
-        private float BiasCache;
-
-        public float[] Derivates;
-
-        private float[] Weights;
-        private float[] WeightCache;
-
-        private float[] PrevUpdateRate;
-        private float PrevUpdateBias;
-
-        private bool DeltaSet;
 
         public int[] ConnectionPattern;
+        public float[] Derivates, Weights;
 
-        public Neuron(int connections, bool constInit, float initVal)
+        //privates
+        private float Bias, BiasCache, PrevUpdateBias;
+
+        private float[] WeightCache, PrevUpdateRate;
+        private bool DeltaSet, L2;
+
+        public Neuron(int connections, bool constInit, float initVal, bool l2)
         {
             Z = 0;
             A = 0;
@@ -39,9 +33,10 @@ namespace vNet
             PrevUpdateBias = 0;
             DeltaSet = false;
             ConnectionPattern = null;
+            L2 = l2;
         }
 
-        public Neuron(int[] connectionPattern, bool constInit, float initVal)
+        public Neuron(int[] connectionPattern, bool constInit, float initVal, bool l2)
         {
             Z = 0;
             A = 0;
@@ -54,6 +49,7 @@ namespace vNet
             PrevUpdateBias = 0;
             DeltaSet = false;
             ConnectionPattern = connectionPattern;
+            L2 = l2;
         }
 
         public void ForwardCalculation(float[] input)
@@ -114,6 +110,23 @@ namespace vNet
         {
             var len = Weights.Length;
 
+            var lambda = 0f;
+
+            // L2 regularization condition
+            if (L2)
+            {
+                for (int i = 0; i < len; i++)
+                {
+                    lambda += (Weights[i] * Weights[i]);
+                }
+                lambda = 1 - ((lambda * learningrate) / len);
+            }
+            else
+            {
+                // if not L2, then multiply weights with 1
+                lambda = 1;
+            }
+
             if (!DeltaSet)
             {
                 /*
@@ -125,7 +138,7 @@ namespace vNet
                 for (int i = 0; i < len; i++)
                 {
                     PrevUpdateRate[i] = (WeightCache[i] / mbatch) * learningrate;
-                    Weights[i] -= PrevUpdateRate[i];
+                    Weights[i] = (Weights[i] * lambda) - PrevUpdateRate[i]; /// L2
                     WeightCache[i] = 0;
                 }
 
@@ -149,7 +162,7 @@ namespace vNet
                 {
                     var Mom = PrevUpdateRate[i] * momentum;
                     PrevUpdateRate[i] = (WeightCache[i] / mbatch) * learningrate;
-                    Weights[i] -= PrevUpdateRate[i] + Mom;
+                    Weights[i] = (Weights[i] * lambda) - (PrevUpdateRate[i] + Mom);
                     WeightCache[i] = 0;
                 }
 

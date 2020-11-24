@@ -14,23 +14,26 @@ namespace vNet
             double[] DataError = new double[dataPoints.GetUpperBound(0) + 1];
             double[] DataAccuracy = new double[dataPoints.GetUpperBound(0) + 1];
             double[] dataXs = new double[dataPoints.GetUpperBound(0) + 1];
+            double[] TrainingLoss = new double[dataPoints.GetUpperBound(0) + 1];
 
             for (int i = 0; i < dataXs.Length; i++)
             {
                 dataXs[i] = i;
                 DataError[i] = dataPoints[i, 0];
                 DataAccuracy[i] = dataPoints[i, 1];
+                TrainingLoss[i] = dataPoints[i, 2];
             }
 
             /// plot the data
             ///
 
-            var plt = new ScottPlot.Plot(800, 600);
+            var plt = new ScottPlot.Plot(1024, 768);
 
             plt.PlotScatterHighlight(dataXs, DataAccuracy, label: "Accuracy");
-            plt.PlotScatterHighlight(dataXs, DataError, label: "Loss");
+            plt.PlotScatterHighlight(dataXs, DataError, label: "Test.Loss");
+            plt.PlotScatterHighlight(dataXs, TrainingLoss, label: "Train.Loss");
 
-            plt.Grid(xSpacing: 20, ySpacing: .05);
+            //plt.Grid(xSpacing:, ySpacing: .05);
 
             //plt.AxisAutoY(0.1);
 

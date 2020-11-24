@@ -47,6 +47,7 @@ namespace vNet.Activations
 
         public override float Derivate(float n, float t)
         {
+            /*
             if (t == 1)
             {
                 return n - 1;
@@ -55,8 +56,9 @@ namespace vNet.Activations
             {
                 return n;
             }
+            */
 
-            //return n - t;
+            return n - t;
         }
     }
 }

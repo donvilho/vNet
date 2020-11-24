@@ -17,7 +17,7 @@
     <PlatformTarget>x64</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
-    <Optimize>true</Optimize>
+    <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
@@ -90,6 +90,8 @@
     <Compile Include="Plot.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Regularization\L2.cs" />
+    <Compile Include="Regularization\Reg.cs" />
     <Compile Include="Trainer.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="ValidationInput.cs" />

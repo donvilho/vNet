@@ -5,44 +5,36 @@ using System.Drawing;
 using System.Linq;
 using vNet.Activations;
 using vNet.LossFunctions;
+using vNet.Regularization;
 
 namespace vNet
 {
     internal class LogisticRegression : ModelType
     {
-        private int Epoch;
-        private float LearningRate, Momentum;
-        private int MiniBatch;
+        private float LearningRate, Momentum, HighestResult, Acc;
+        private int MiniBatch, HighestResultEpoch, Epoch, StepDecay, DLT, DUT, Classes;
         private double[,] PlotData;
         private List<(int, int)> Heatmap;
-        private float Acc;
-        private int Classes;
         private float[] Output;
-
         private Activation activation;
         private Loss loss;
-
-        private float HighestResult;
-        private int HighestResultEpoch, DropOutThreshold;
-
         private Dataset Data;
-
         private Neuron[] Neurons;
 
-        public LogisticRegression(Dataset dataset, int DropoutThreshold = 0, bool constInit = false, float initVal = 1f)
+        public LogisticRegression(Dataset dataset, int DropoutLowerThreshold = 0, int DropoutUpperThreshold = 0, bool L2 = false, bool constInit = false, float initVal = 1f)
         {
             HighestResult = 0;
             HighestResultEpoch = 0;
-
             Data = dataset;
             Classes = dataset.classCount;
             Heatmap = new List<(int, int)>();
             Neurons = new Neuron[Classes];
             Output = new float[Classes];
 
-            if (DropoutThreshold > 0)
+            if (DropoutLowerThreshold != 0 & DropoutUpperThreshold != 0)
             {
-                DropOutThreshold = DropoutThreshold;
+                DLT = DropoutLowerThreshold;
+                DUT = DropoutUpperThreshold;
                 var temp = new List<int>();
                 var interMidLayer = new int[dataset.InputLenght];
 
@@ -53,9 +45,10 @@ namespace vNet
                         interMidLayer[j] += dataset.TrainingData[i].Data[j] > 0 ? 1 : 0;
                     }
                 }
+
                 for (int i = 0; i < interMidLayer.Length; i++)
                 {
-                    if (interMidLayer[i] > DropoutThreshold)
+                    if (interMidLayer[i] > DLT & interMidLayer[i] < DUT)
                     {
                         temp.Add(i);
                     }
@@ -65,7 +58,7 @@ namespace vNet
 
                 for (int i = 0; i < Neurons.Length; i++)
                 {
-                    Neurons[i] = new Neuron(ConnectionPattern, constInit, initVal);
+                    Neurons[i] = new Neuron(ConnectionPattern, constInit, initVal, L2);
                 }
 
                 Data.ApplyConnectionMask(ConnectionPattern);
@@ -74,18 +67,19 @@ namespace vNet
             {
                 for (int i = 0; i < Neurons.Length; i++)
                 {
-                    Neurons[i] = new Neuron(Data.InputLenght, constInit, initVal);
+                    Neurons[i] = new Neuron(Data.InputLenght, constInit, initVal, L2);
                 }
             }
         }
 
-        public void TrainModel(int epoch, float learningRate, float momentum = 0, int miniBatch = 1, bool validatewithTS = false)
+        public void TrainModel(int epoch, float learningRate, int stepDecay = 0, float momentum = 0, int miniBatch = 1, bool validatewithTS = false)
         {
+            StepDecay = stepDecay;
             Epoch = epoch;
             LearningRate = learningRate;
             Momentum = momentum;
             MiniBatch = miniBatch;
-            PlotData = new double[Epoch, 2];
+            PlotData = new double[Epoch, 3];
 
             if (MiniBatch == 0) { MiniBatch = Data.TrainingData.Length; }
 
@@ -106,8 +100,9 @@ namespace vNet
                 "Batchsize: {3}\n" +
                 "Learningrate: {1}\n" +
                 "Momentum: {4}\n" +
-                "Dropout threshold: {2}\n",
-                Epoch, LearningRate, DropOutThreshold, MiniBatch, Momentum);
+                "Dropout lower threshold: {2}\n" +
+                "Dropout upper threshold: {5}\n",
+                Epoch, LearningRate, DLT, MiniBatch, Momentum, DUT);
 
             Trainer(Momentum, validatewithTS);
 
@@ -220,7 +215,7 @@ namespace vNet
                     //activate
                     Output = activation.Activate(Neurons);
 
-                    Loss += -loss.Calculate(Output, input.TruthLabel);
+                    Loss += loss.Calculate(Output, input.TruthLabel);
 
                     // Convert output
                     int position = Output.ToList().IndexOf(Output.Max());
@@ -239,7 +234,7 @@ namespace vNet
 
                 PlotData[epoch, 0] = Loss / ValidationSet.Length;
                 PlotData[epoch, 1] = Acc;
-                Console.WriteLine("E: " + epoch + " Loss: " + Loss / ValidationSet.Length + " Acc: " + Acc);
+                Console.WriteLine("E: " + epoch + " Loss: " + Loss / ValidationSet.Length + " LR: " + LearningRate + " Acc: " + Acc);
             }
         }
 
@@ -247,9 +242,7 @@ namespace vNet
         {
             int BatchCount = 0;
 
-            //var timer = new Stopwatch();
-
-            // Main Loop
+            int StepDecayCounter = 0;
 
             for (int e = 0; e < Epoch; e++)
             {
@@ -266,6 +259,8 @@ namespace vNet
 
                     //prediction
                     Output = activation.Activate(Neurons);
+
+                    PlotData[e, 2] += loss.Calculate(Output, input.TruthLabel);
 
                     //var pos = Output.ToList().IndexOf(Output.Max());
 
@@ -293,9 +288,16 @@ namespace vNet
                     }
                 }
 
+                PlotData[e, 2] /= Data.TrainingData.Length;
                 TestModel(e, validateWithTrainingSet, plot: false);
-                //timer.Stop();
-                //Console.WriteLine(timer.ElapsedMilliseconds);
+
+                StepDecayCounter++;
+
+                if (StepDecayCounter == StepDecay)
+                {
+                    LearningRate *= .75f;
+                    StepDecayCounter = 0;
+                }
             }
 
             TestModel(Epoch, validateWithTrainingSet: false, plot: true);

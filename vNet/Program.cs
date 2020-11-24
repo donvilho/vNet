@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 using System.Threading.Tasks;
+using vNet.Regularization;
 
 namespace vNet
 {
@@ -14,11 +15,35 @@ namespace vNet
             var testset = Utils.DataArrayCreator(@"C:\Users\ville\Downloads\mnist_png.tar\mnist_png\testing");
             var Dataset = new Dataset(trainingset, testset);
 
-            Dataset.ReduceToPercentage(30);
+            Dataset.ReduceToPercentage(20);
 
-            var Model = new LogisticRegression(Dataset, DropoutThreshold: 2000, constInit: true);
-            Model.TrainModel(epoch: 100, learningRate: .125f, momentum: 0.75f, miniBatch: 128, validatewithTS: false);
+            var Model = new LogisticRegression(Dataset,
+                L2: true,
+                DropoutLowerThreshold: 1,
+                DropoutUpperThreshold: 0,
+                constInit: true);
 
+            Model.TrainModel(epoch: 20,
+                learningRate: .01f,
+                stepDecay: 50,
+                momentum: .0f,
+                miniBatch: 32);
+
+            // Hyvä esimerkki datasta
+            /*
+            Dataset.ReduceToPercentage(20);
+
+            var Model = new LogisticRegression(Dataset,
+                DropoutLowerThreshold: 1,
+                DropoutUpperThreshold: 0,
+                constInit: false);
+
+            Model.TrainModel(epoch: 150,
+                learningRate: .01f,
+                stepDecay: 50,
+                momentum: .0f,
+                miniBatch: 128);
+            */
             //var Model = new LogisticRegression(Dataset, DropoutThreshold: 2000, constInit: true);
             //Model.TrainModel(epoch: 100, learningRate: .125f, momentum: 0.75f, miniBatch: 128, validatewithTS: false);
 
