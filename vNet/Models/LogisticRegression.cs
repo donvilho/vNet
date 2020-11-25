@@ -5,11 +5,10 @@ using System.Drawing;
 using System.Linq;
 using vNet.Activations;
 using vNet.LossFunctions;
-using vNet.Regularization;
 
 namespace vNet
 {
-    internal class LogisticRegression : ModelType
+    internal class LogisticRegression : Model
     {
         private float LearningRate, Momentum, HighestResult, Acc;
         private int MiniBatch, HighestResultEpoch, Epoch, StepDecay, DLT, DUT, Classes;
@@ -73,6 +72,43 @@ namespace vNet
         }
 
         public void TrainModel(int epoch, float learningRate, int stepDecay = 0, float momentum = 0, int miniBatch = 1, bool validatewithTS = false)
+        {
+            StepDecay = stepDecay;
+            Epoch = epoch;
+            LearningRate = learningRate;
+            Momentum = momentum;
+            MiniBatch = miniBatch;
+            PlotData = new double[Epoch, 3];
+
+            if (MiniBatch == 0) { MiniBatch = Data.TrainingData.Length; }
+
+            if (Classes > 2)
+            {
+                activation = new Softmax();
+                loss = new CrossEntropy();
+            }
+            else
+            {
+                activation = new Sigmoid();
+                loss = new CrossEntropy();
+            }
+
+            Console.WriteLine("-----Starting training-----\n" +
+                "<-Parameters->\n" +
+                "Epoch: {0}\n" +
+                "Batchsize: {3}\n" +
+                "Learningrate: {1}\n" +
+                "Momentum: {4}\n" +
+                "Dropout lower threshold: {2}\n" +
+                "Dropout upper threshold: {5}\n",
+                Epoch, LearningRate, DLT, MiniBatch, Momentum, DUT);
+
+            Trainer(Momentum, validatewithTS);
+
+            Plot.Graph(PlotData, LearningRate, MiniBatch, HighestResultEpoch);
+        }
+
+        public void MultiTraining(TrainingSetup setup, int epoch, float learningRate, int stepDecay = 0, float momentum = 0, int miniBatch = 1, bool validatewithTS = false)
         {
             StepDecay = stepDecay;
             Epoch = epoch;

@@ -71,9 +71,8 @@
     <Compile Include="Activations\Activation.cs" />
     <Compile Include="Activations\Sigmoid.cs" />
     <Compile Include="Activations\Softmax.cs" />
-    <Compile Include="Dataset.cs" />
-    <Compile Include="EpochResult.cs" />
-    <Compile Include="Input.cs" />
+    <Compile Include="Data\Dataset.cs" />
+    <Compile Include="Data\Input.cs" />
     <Compile Include="Layer\Layer.cs" />
     <Compile Include="Models\LinearRegression.cs" />
     <Compile Include="LossFunctions\CrossEntropy.cs" />
@@ -81,18 +80,15 @@
     <Compile Include="LossFunctions\MSA.cs" />
     <Compile Include="LossFunctions\MSE.cs" />
     <Compile Include="Models\LogisticRegression.cs" />
-    <Compile Include="mics.cs" />
-    <Compile Include="Models\ModelType.cs" />
+    <Compile Include="Models\Model.cs" />
     <Compile Include="Network.cs" />
     <Compile Include="NetworkTrainer.cs" />
     <Compile Include="Neuron.cs" />
-    <Compile Include="ParallelTest.cs" />
     <Compile Include="Plot.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Regularization\L2.cs" />
-    <Compile Include="Regularization\Reg.cs" />
-    <Compile Include="Trainer.cs" />
+    <Compile Include="Trainer\Trainer.cs" />
+    <Compile Include="TrainingSetup.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="ValidationInput.cs" />
   </ItemGroup>
@@ -101,8 +97,6 @@
     <None Include="ClassDiagram1.cd" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Rework\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -10,6 +10,19 @@ namespace vNet
         public int InputLenght { get; private set; }
         public int classCount { get; private set; }
 
+        public Dataset(string trainingset, string testset, int reduceTo = 0)
+        {
+            TrainingData = Utils.DataArrayCreator(trainingset);
+            ValidationgData = Utils.DataArrayCreator(testset);
+            InputLenght = TrainingData[0].Data.Length;
+            classCount = TrainingData[0].TruthLabel.Length;
+
+            if (reduceTo > 0)
+            {
+                ReduceToPercentage(reduceTo);
+            }
+        }
+
         public Dataset(Input[] dataset)
         {
             Shuffle(dataset);

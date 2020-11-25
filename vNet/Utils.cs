@@ -220,10 +220,6 @@ namespace vNet
             return Dataset.ToArray();
         }
 
-        public static void Plot_Heatmap(List<Result> results)
-        {
-        }
-
         public static List<Input> CSVtoArray(string path)
         {
             var result = new List<Input>();

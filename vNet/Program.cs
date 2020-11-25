@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Numerics;
 using System.Threading.Tasks;
-using vNet.Regularization;
 
 namespace vNet
 {
@@ -11,24 +10,37 @@ namespace vNet
     {
         private static void Main(string[] args)
         {
-            var trainingset = Utils.DataArrayCreator(@"C:\Users\ville\Downloads\mnist_png.tar\mnist_png\training");
-            var testset = Utils.DataArrayCreator(@"C:\Users\ville\Downloads\mnist_png.tar\mnist_png\testing");
-            var Dataset = new Dataset(trainingset, testset);
+            var trainingset = @"C:\Users\ville\Downloads\mnist_png.tar\mnist_png\training";
+            var testset = @"C:\Users\ville\Downloads\mnist_png.tar\mnist_png\testing";
 
-            Dataset.ReduceToPercentage(20);
+            var dataset = new Dataset(trainingset, testset, 20);
 
-            var Model = new LogisticRegression(Dataset,
+            var lrs = new float[] { 0.1f, 0.01f, 0.001f };
+            var bts = new int[] { 32, 64, 128 };
+
+            var tSetup = new TrainingSetup(lrs, bts);
+
+            var Model = new LogisticRegression(
+                dataset,
                 L2: true,
                 DropoutLowerThreshold: 1,
                 DropoutUpperThreshold: 0,
                 constInit: true);
 
-            Model.TrainModel(epoch: 20,
+            Model.MultiTraining(tSetup,
+                epoch: 20,
                 learningRate: .01f,
                 stepDecay: 50,
                 momentum: .0f,
                 miniBatch: 32);
 
+            /*
+            Model.TrainModel(epoch: 20,
+                learningRate: .01f,
+                stepDecay: 50,
+                momentum: .0f,
+                miniBatch: 32);
+            */
             // Hyvä esimerkki datasta
             /*
             Dataset.ReduceToPercentage(20);

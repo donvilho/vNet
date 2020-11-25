@@ -1,6 +1,6 @@
 ﻿namespace vNet
 {
-    internal interface ModelType
+    internal interface Model
     {
     }
 }

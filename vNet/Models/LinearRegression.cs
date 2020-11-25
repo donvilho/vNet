@@ -2,7 +2,7 @@
 
 namespace vNet
 {
-    internal class LinearRegression : ModelType
+    internal class LinearRegression : Model
     {
         private float[] Weights;
         private float Bias;
