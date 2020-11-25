@@ -3,19 +3,21 @@ using System.Linq;
 
 namespace vNet
 {
-    internal class Dataset
+    public class Dataset
     {
         public Input[] TrainingData { get; private set; }
-        public Input[] ValidationgData { get; private set; }
+        public Input[] ValidationData { get; private set; }
         public int InputLenght { get; private set; }
         public int classCount { get; private set; }
+        public int[] connectionMask;
 
         public Dataset(string trainingset, string testset, int reduceTo = 0)
         {
             TrainingData = Utils.DataArrayCreator(trainingset);
-            ValidationgData = Utils.DataArrayCreator(testset);
+            ValidationData = Utils.DataArrayCreator(testset);
             InputLenght = TrainingData[0].Data.Length;
             classCount = TrainingData[0].TruthLabel.Length;
+            connectionMask = null;
 
             if (reduceTo > 0)
             {
@@ -26,7 +28,7 @@ namespace vNet
         public Dataset(Input[] dataset)
         {
             Shuffle(dataset);
-            ValidationgData = dataset.Take((int)((float)dataset.Length * 0.2f)).ToArray();
+            ValidationData = dataset.Take((int)((float)dataset.Length * 0.2f)).ToArray();
             TrainingData = dataset.Skip((int)((float)dataset.Length * 0.2f)).ToArray();
             InputLenght = TrainingData[0].Data.Length;
             Normalize_Datasets();
@@ -35,17 +37,18 @@ namespace vNet
         public Dataset(Input[] training, Input[] test)
         {
             TrainingData = training;
-            ValidationgData = test;
+            ValidationData = test;
             InputLenght = TrainingData[0].Data.Length;
             classCount = TrainingData[0].TruthLabel.Length;
+            connectionMask = null;
         }
 
         public void ReduceToPercentage(int value)
         {
             Shuffle(TrainingData);
             TrainingData = TrainingData.Take((TrainingData.Length / 100) * value).ToArray();
-            Shuffle(ValidationgData);
-            ValidationgData = ValidationgData.Take((ValidationgData.Length / 100) * value).ToArray();
+            Shuffle(ValidationData);
+            ValidationData = ValidationData.Take((ValidationData.Length / 100) * value).ToArray();
         }
 
         public void Shuffle(Input[] Array)
@@ -63,7 +66,7 @@ namespace vNet
         public void Normalize_Datasets()
         {
             Normalize(TrainingData);
-            Normalize(ValidationgData);
+            Normalize(ValidationData);
         }
 
         private void Normalize(Input[] data)
@@ -89,15 +92,17 @@ namespace vNet
                 TrainingData[i].Data = newInput;
             }
 
-            for (int i = 0; i < ValidationgData.Length; i++)
+            for (int i = 0; i < ValidationData.Length; i++)
             {
                 var newInput = new float[mask.Length];
                 for (int j = 0; j < mask.Length; j++)
                 {
-                    newInput[j] = ValidationgData[i].Data[mask[j]];
+                    newInput[j] = ValidationData[i].Data[mask[j]];
                 }
-                ValidationgData[i].Data = newInput;
+                ValidationData[i].Data = newInput;
             }
+
+            connectionMask = mask;
         }
     }
 }

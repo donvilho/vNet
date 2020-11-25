@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace vNet
 {
-    internal class TrainingSetup
+    public class TrainingSetup
     {
         public float[] learningrates;
         public int[] batches;
 
-        public TrainingSetup(float[] lrs, int[] bts) => (lrs, bts) = (learningrates, batches);
+        public TrainingSetup(float[] lrs, int[] bts) => (learningrates, batches) = (lrs, bts);
     }
 }

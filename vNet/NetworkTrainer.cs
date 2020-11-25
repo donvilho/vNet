@@ -87,9 +87,9 @@ namespace vNet
             var Accuracy = 0f;
             var TotalError = 0f;
 
-            inputs.Shuffle(inputs.ValidationgData);
+            inputs.Shuffle(inputs.ValidationData);
 
-            foreach (var input in inputs.ValidationgData)
+            foreach (var input in inputs.ValidationData)
             {
                 //Forward
 
@@ -128,7 +128,7 @@ namespace vNet
                 NeuronsBackprop[Neurons.Length - 1] = LossFunction(Neurons[Neurons.Length - 1], input.TruthLabel, costFunction);
                 TotalError += NeuronsBackprop[Neurons.Length - 1].Sum();
             }
-            Console.WriteLine("TEST: " + Accuracy / inputs.ValidationgData.Length);
+            Console.WriteLine("TEST: " + Accuracy / inputs.ValidationData.Length);
         }
 
         /// <summary>

@@ -1,39 +1,28 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using vNet.Activations;
 using vNet.LossFunctions;
 
 namespace vNet
 {
-    internal class LogisticRegression : Model
+    public class LogisticRegression
     {
-        private float LearningRate, Momentum, HighestResult, Acc;
-        private int MiniBatch, HighestResultEpoch, Epoch, StepDecay, DLT, DUT, Classes;
-        private double[,] PlotData;
-        private List<(int, int)> Heatmap;
-        private float[] Output;
-        private Activation activation;
-        private Loss loss;
-        private Dataset Data;
-        private Neuron[] Neurons;
+        public Dataset Data { get; set; }
 
         public LogisticRegression(Dataset dataset, int DropoutLowerThreshold = 0, int DropoutUpperThreshold = 0, bool L2 = false, bool constInit = false, float initVal = 1f)
         {
-            HighestResult = 0;
-            HighestResultEpoch = 0;
             Data = dataset;
-            Classes = dataset.classCount;
-            Heatmap = new List<(int, int)>();
-            Neurons = new Neuron[Classes];
-            Output = new float[Classes];
+
+            // Connection mask
 
             if (DropoutLowerThreshold != 0 & DropoutUpperThreshold != 0)
             {
-                DLT = DropoutLowerThreshold;
-                DUT = DropoutUpperThreshold;
                 var temp = new List<int>();
                 var interMidLayer = new int[dataset.InputLenght];
 
@@ -47,235 +36,136 @@ namespace vNet
 
                 for (int i = 0; i < interMidLayer.Length; i++)
                 {
-                    if (interMidLayer[i] > DLT & interMidLayer[i] < DUT)
+                    if (interMidLayer[i] > DropoutLowerThreshold & interMidLayer[i] < DropoutUpperThreshold)
                     {
                         temp.Add(i);
                     }
                 }
 
-                var ConnectionPattern = temp.ToArray();
-
-                for (int i = 0; i < Neurons.Length; i++)
-                {
-                    Neurons[i] = new Neuron(ConnectionPattern, constInit, initVal, L2);
-                }
-
-                Data.ApplyConnectionMask(ConnectionPattern);
-            }
-            else
-            {
-                for (int i = 0; i < Neurons.Length; i++)
-                {
-                    Neurons[i] = new Neuron(Data.InputLenght, constInit, initVal, L2);
-                }
+                Data.ApplyConnectionMask(temp.ToArray());
             }
         }
 
-        public void TrainModel(int epoch, float learningRate, int stepDecay = 0, float momentum = 0, int miniBatch = 1, bool validatewithTS = false)
+        public void TrainModel(int epoch, float learningRate, int stepDecay = 0, float momentum = 0, int miniBatch = 1)
         {
-            StepDecay = stepDecay;
-            Epoch = epoch;
-            LearningRate = learningRate;
-            Momentum = momentum;
-            MiniBatch = miniBatch;
-            PlotData = new double[Epoch, 3];
-
-            if (MiniBatch == 0) { MiniBatch = Data.TrainingData.Length; }
-
-            if (Classes > 2)
-            {
-                activation = new Softmax();
-                loss = new CrossEntropy();
-            }
-            else
-            {
-                activation = new Sigmoid();
-                loss = new CrossEntropy();
-            }
+            if (miniBatch == 0) { miniBatch = Data.TrainingData.Length; }
 
             Console.WriteLine("-----Starting training-----\n" +
                 "<-Parameters->\n" +
                 "Epoch: {0}\n" +
                 "Batchsize: {3}\n" +
                 "Learningrate: {1}\n" +
-                "Momentum: {4}\n" +
-                "Dropout lower threshold: {2}\n" +
-                "Dropout upper threshold: {5}\n",
-                Epoch, LearningRate, DLT, MiniBatch, Momentum, DUT);
+                "Momentum: {4}\n",
+                epoch, learningRate, miniBatch, momentum);
 
-            Trainer(Momentum, validatewithTS);
+            var trainer = new Trainer(Data);
+            var result = trainer.Train(Data, epoch, learningRate, miniBatch, momentum, stepDecay);
 
-            Plot.Graph(PlotData, LearningRate, MiniBatch, HighestResultEpoch);
+            Plot.Graph(result.Item1, learningRate, miniBatch, result.Item2);
         }
 
         public void MultiTraining(TrainingSetup setup, int epoch, float learningRate, int stepDecay = 0, float momentum = 0, int miniBatch = 1, bool validatewithTS = false)
         {
-            StepDecay = stepDecay;
-            Epoch = epoch;
-            LearningRate = learningRate;
-            Momentum = momentum;
-            MiniBatch = miniBatch;
-            PlotData = new double[Epoch, 3];
+            if (miniBatch == 0) { miniBatch = Data.TrainingData.Length; }
 
-            if (MiniBatch == 0) { MiniBatch = Data.TrainingData.Length; }
+            var cBag = new ConcurrentBag<(double[,], int, float, int)>();
 
-            if (Classes > 2)
-            {
-                activation = new Softmax();
-                loss = new CrossEntropy();
-            }
-            else
-            {
-                activation = new Sigmoid();
-                loss = new CrossEntropy();
-            }
+            var trainer = new ThreadLocal<Trainer>(() => new Trainer(Data));
+            Parallel.For(0, setup.learningrates.Length, i =>
+             {
+                 for (int j = 0; j < setup.batches.Length; j++)
+                 {
+                     Console.WriteLine(Thread.CurrentThread.ManagedThreadId + " started " + setup.learningrates[i] + " - " + setup.batches[j]);
+                     cBag.Add(trainer.Value.Train(Data, epoch, setup.learningrates[i], setup.batches[j], momentum, stepDecay));
+                     Console.WriteLine(Thread.CurrentThread.ManagedThreadId + " done");
+                 };
+             });
 
-            Console.WriteLine("-----Starting training-----\n" +
-                "<-Parameters->\n" +
-                "Epoch: {0}\n" +
-                "Batchsize: {3}\n" +
-                "Learningrate: {1}\n" +
-                "Momentum: {4}\n" +
-                "Dropout lower threshold: {2}\n" +
-                "Dropout upper threshold: {5}\n",
-                Epoch, LearningRate, DLT, MiniBatch, Momentum, DUT);
+            Console.WriteLine();
 
-            Trainer(Momentum, validatewithTS);
-
-            Plot.Graph(PlotData, LearningRate, MiniBatch, HighestResultEpoch);
+            Plot.GraphList(cBag.ToList());
         }
 
-        private void TestModel(int epoch, bool validateWithTrainingSet, bool plot = false)
+        /// <summary>
+        ///
+        /// </summary>
+        /// <param name="epoch"></param>
+        /// <param name="validateWithTrainingSet"></param>
+        /// <returns>(Loss,Accuracy)</returns>
+
+        /*
+        private (double[,], int) Trainer2BU(int epoch, float lr, int batch, float momentum, int stepDecay)
         {
-            var Prediction = new int[Classes][];
+            var PlotData = new double[epoch, 3];
+            float HighestResult = 0;
+            int HighestResultEpoch = 0;
+            int BatchCount = 0;
+            int StepDecayCounter = 0;
 
-            for (int i = 0; i < Prediction.Length; i++)
+            for (int e = 0; e < epoch; e++)
             {
-                Prediction[i] = new int[Classes];
-            }
-
-            var classcount = new int[Classes];
-
-            var TestPlot = new double[Classes, Classes];
-            var testx = new List<int>();
-            var testy = new List<int>();
-
-            var Misclassified = new List<int>();
-
-            var ValidationSet = (validateWithTrainingSet == true ? Data.TrainingData : Data.ValidationgData);
-
-            if (plot)
-            {
-                var faults = new int[Classes];
-                var correct = new int[Classes];
-
-                var plt = new ScottPlot.Plot(800, 600);
-                var pltMissclass = new ScottPlot.Plot(800, 600);
-                bool imagesFull = false;
-
-                Heatmap.Clear();
-
-                foreach (var input in ValidationSet)
+                Data.Shuffle(Data.TrainingData);
+                var trainingAccuracy = 0f;
+                //Training loop
+                foreach (var input in Data.TrainingData)
                 {
-                    //forward
                     for (int i = 0; i < Neurons.Length; i++)
                     {
                         Neurons[i].ForwardCalculation(input.Data);
                     }
 
-                    //activate
+                    //prediction
                     Output = activation.Activate(Neurons);
 
-                    // Convert output
-                    int position = Output.ToList().IndexOf(Output.Max());
-                    var yPos = input.TruthLabel.ToList().IndexOf(input.TruthLabel.Max());
-                    classcount[yPos]++;
+                    trainingAccuracy += Output.ToList().IndexOf(Output.Max()) == input.TruthLabel.ToList().IndexOf(input.TruthLabel.Max()) ? 1 : 0;
 
-                    if (yPos != position)
+                    for (int i = 0; i < Neurons.Length; i++)
                     {
-                        Prediction[yPos][position]++;
-
-                        pltMissclass.PlotBitmap(new Bitmap(Image.FromFile(input.Path)), yPos, position, alignment: ScottPlot.ImageAlignment.middleCenter);
+                        Neurons[i].Derivate = activation.Derivate(Output[i], input.TruthLabel[i]);
+                        Neurons[i].Backpropagate(input.Data);
                     }
 
-                    Heatmap.Add((yPos, position));
-                    TestPlot[yPos, position]++;
+                    BatchCount++;
 
-                    testx.Add(yPos);
-                    testy.Add(position);
-                }
-
-                var plottables = plt.GetPlottables();
-
-                for (int i = 0; i < TestPlot.GetLength(0); i++)
-                {
-                    for (int j = 0; j < TestPlot.GetLength(1); j++)
+                    if (BatchCount == batch)
                     {
-                        var multiplier = Math.Round(TestPlot[i, j] / classcount[i], 3);
-
-                        if (multiplier > 0)
+                        for (int i = 0; i < Neurons.Length; i++)
                         {
-                            plottables.Add(new ScottPlot.PlottableText(multiplier.ToString(), i, j,
-                            color: Color.Black, fontName: "arial", fontSize: 15,
-                            bold: (i == j ? true : false), label: "", alignment: ScottPlot.TextAlignment.middleCenter,
-                            rotation: 0, frame: false, frameColor: Color.Green));
+                            Neurons[i].AdjustWeights(batch, lr, momentum);
                         }
+
+                        BatchCount = 0;
                     }
                 }
 
-                var temp = classcount.Select(x => x.ToString()).ToArray();
+                PlotData[e, 2] = trainingAccuracy / Data.TrainingData.Length;
+                var result = TestModel();
 
-                pltMissclass.Title("X: truth, Y: wrong prediction with image");
-                //pltMissclass.XTicks(temp);
-                pltMissclass.Grid(xSpacing: 1, ySpacing: 1);
-                pltMissclass.SaveFig("missclass.png");
-                Process.Start(new ProcessStartInfo("missclass.png") { UseShellExecute = true });
+                PlotData[e, 0] = result.Item1;
+                PlotData[e, 1] = result.Item2;
 
-                plt.Grid(xSpacing: 1, ySpacing: 1);
-                plt.SaveFig("HeatmapImage.png");
-                Process.Start(new ProcessStartInfo("HeatmapImage.png") { UseShellExecute = true });
-            }
-            else
-            {
-                var Loss = 0f;
-                var Accuracy = 0f;
-
-                foreach (var input in ValidationSet)
+                if (result.Item2 > HighestResult)
                 {
-                    //forward
-                    for (int i = 0; i < Neurons.Length; i++)
-                    {
-                        Neurons[i].ForwardCalculation(input.Data);
-                    }
-
-                    //activate
-                    Output = activation.Activate(Neurons);
-
-                    Loss += loss.Calculate(Output, input.TruthLabel);
-
-                    // Convert output
-                    int position = Output.ToList().IndexOf(Output.Max());
-                    var yPos = input.TruthLabel.ToList().IndexOf(input.TruthLabel.Max());
-
-                    Accuracy += position == yPos ? 1 : 0;
+                    HighestResult = result.Item2;
+                    HighestResultEpoch = e;
                 }
 
-                Acc = (float)Math.Round(Accuracy / ValidationSet.Length, 3);
+                StepDecayCounter++;
 
-                if (Acc > HighestResult)
+                if (StepDecayCounter == stepDecay)
                 {
-                    HighestResult = Acc;
-                    HighestResultEpoch = epoch;
+                    lr *= .75f;
+                    StepDecayCounter = 0;
                 }
-
-                PlotData[epoch, 0] = Loss / ValidationSet.Length;
-                PlotData[epoch, 1] = Acc;
-                Console.WriteLine("E: " + epoch + " Loss: " + Loss / ValidationSet.Length + " LR: " + LearningRate + " Acc: " + Acc);
             }
+
+            return (PlotData, HighestResultEpoch);
         }
+        */
 
-        private void Trainer(float momentum, bool validateWithTrainingSet)
+        private void TrainerBU(float momentum, bool validateWithTrainingSet)
         {
+            /*
             int BatchCount = 0;
 
             int StepDecayCounter = 0;
@@ -337,6 +227,7 @@ namespace vNet
             }
 
             TestModel(Epoch, validateWithTrainingSet: false, plot: true);
+            */
         }
     }
 }

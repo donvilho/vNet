@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace vNet
 {
-    internal abstract class Loss
+    public abstract class Loss
     {
         public abstract float Calculate(float[] n, float[] t);
     }

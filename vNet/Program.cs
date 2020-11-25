@@ -16,7 +16,7 @@ namespace vNet
             var dataset = new Dataset(trainingset, testset, 20);
 
             var lrs = new float[] { 0.1f, 0.01f, 0.001f };
-            var bts = new int[] { 32, 64, 128 };
+            var bts = new int[] { 0 };
 
             var tSetup = new TrainingSetup(lrs, bts);
 
@@ -27,12 +27,13 @@ namespace vNet
                 DropoutUpperThreshold: 0,
                 constInit: true);
 
-            Model.MultiTraining(tSetup,
-                epoch: 20,
+            Model.MultiTraining(
+                tSetup,
+                epoch: 100,
                 learningRate: .01f,
                 stepDecay: 50,
                 momentum: .0f,
-                miniBatch: 32);
+                miniBatch: 256);
 
             /*
             Model.TrainModel(epoch: 20,

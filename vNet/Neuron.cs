@@ -6,7 +6,7 @@ using vNet.Activations;
 
 namespace vNet
 {
-    internal class Neuron
+    public class Neuron
     {
         //publics
         public float Derivate, A, Z;

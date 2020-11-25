@@ -1,6 +1,6 @@
 ﻿namespace vNet
 {
-    internal struct Input
+    public struct Input
     {
         public float[] TruthLabel { get; set; }
         public float[] Data { get; set; }

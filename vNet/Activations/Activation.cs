@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace vNet
 {
-    internal abstract class Activation
+    public abstract class Activation
     {
         public abstract float Activate(float n);
 
