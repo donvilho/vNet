@@ -6,6 +6,8 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Security.Cryptography;
 using System.Threading.Tasks;
 
@@ -13,6 +15,39 @@ namespace vNet
 {
     internal class Utils
     {
+        public static Dataset DatasetFromBinary(string path)
+        {
+            try
+            {
+                Stream Reader = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.None);
+                IFormatter formatter = new BinaryFormatter();
+                var dataset = (Dataset)formatter.Deserialize(Reader);
+                Reader.Close();
+
+                return dataset;
+            }
+            catch (Exception Ex)
+            {
+                Console.WriteLine(Ex.Message);
+                return null;
+            }
+        }
+
+        public static void DatasetToBinary(Dataset dataset, string datasetName)
+        {
+            try
+            {
+                Stream writer = new FileStream(datasetName + ".bin", FileMode.Create, FileAccess.Write, FileShare.None);
+                IFormatter formatter = new BinaryFormatter();
+                formatter.Serialize(writer, dataset);
+                writer.Close();
+            }
+            catch (Exception Ex)
+            {
+                Console.WriteLine(Ex.Message);
+            }
+        }
+
         public static float NumericSigmoid(double x)
         {
             return (float)(1 / (1 + Math.Pow(0.3678749025, x)));
@@ -330,7 +365,7 @@ namespace vNet
             return value;
         }
 
-        public static float[] Generate_Vector(int size, bool incrementInt = false, double min = 0.1, double max = 0.9, bool setNumber = false, float number = 0)
+        public static float[] Generate_Vector(int size, double min = 0.1, double max = 0.9, float number = 0)
         {
             /// super randomizer
             /// järkyttävä overkill mutta olkoot
@@ -351,18 +386,15 @@ namespace vNet
 
             float[] Result = new float[size];
 
-            int count = 0;
-
             for (int i = 0; i < size; ++i)
             {
-                if (incrementInt)
+                if (number > 0)
                 {
-                    Result[i] = count;
-                    count++;
+                    Result[i] = number;
                 }
                 else
                 {
-                    Result[i] = (setNumber ? number : Convert.ToSingle((rand.NextDouble() * max) - (min)));
+                    Result[i] = Convert.ToSingle((rand.NextDouble() * max) - (min));
                 }
             }
             random.Dispose();

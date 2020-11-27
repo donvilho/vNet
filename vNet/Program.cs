@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
+using System.IO;
 using System.Numerics;
 using System.Threading.Tasks;
 
@@ -10,30 +11,33 @@ namespace vNet
     {
         private static void Main(string[] args)
         {
-            var trainingset = @"C:\Users\ville\Downloads\mnist_png.tar\mnist_png\training";
-            var testset = @"C:\Users\ville\Downloads\mnist_png.tar\mnist_png\testing";
+            //var trainingset = @"C:\Users\ville\Downloads\mnist_png.tar\mnist_png\training";
+            //var testset = @"C:\Users\ville\Downloads\mnist_png.tar\mnist_png\testing";
+            //var dataset = new Dataset(trainingset, testset);
 
-            var dataset = new Dataset(trainingset, testset, 20);
+            var dataset = Utils.DatasetFromBinary("MnistFull.bin");
 
-            var lrs = new float[] { 0.1f, 0.01f, 0.001f };
-            var bts = new int[] { 0 };
-
-            var tSetup = new TrainingSetup(lrs, bts);
+            //dataset.ReduceToPercentage(10);
 
             var Model = new LogisticRegression(
                 dataset,
-                L2: true,
-                DropoutLowerThreshold: 1,
-                DropoutUpperThreshold: 0,
-                constInit: true);
+                DropoutLowerThreshold: 0,
+                DropoutUpperThreshold: 0);
 
-            Model.MultiTraining(
-                tSetup,
-                epoch: 100,
-                learningRate: .01f,
-                stepDecay: 50,
-                momentum: .0f,
-                miniBatch: 256);
+            //Model.MultiTraining();
+
+            Model.TrainModel(epoch: 300,
+               learningRate: .01f,
+               stepDecay: 150,
+               momentum: .1f,
+               miniBatch: 128,
+               l2: true);
+
+            Model.RunModel(@"C:\Users\ville\Downloads\mnist_png.tar\mnist_png\c");
+
+            Console.ReadKey();
+
+            //Model.MultiTraining();
 
             /*
             Model.TrainModel(epoch: 20,

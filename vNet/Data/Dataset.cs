@@ -3,10 +3,12 @@ using System.Linq;
 
 namespace vNet
 {
+    [Serializable]
     public class Dataset
     {
         public Input[] TrainingData { get; private set; }
         public Input[] ValidationData { get; private set; }
+        public Input[] DevSet { get; private set; }
         public int InputLenght { get; private set; }
         public int classCount { get; private set; }
         public int[] connectionMask;
@@ -18,6 +20,9 @@ namespace vNet
             InputLenght = TrainingData[0].Data.Length;
             classCount = TrainingData[0].TruthLabel.Length;
             connectionMask = null;
+
+            Shuffle(TrainingData);
+            DevSet = TrainingData.Take((TrainingData.Length / 100) * 10).ToArray();
 
             if (reduceTo > 0)
             {
@@ -48,7 +53,7 @@ namespace vNet
             Shuffle(TrainingData);
             TrainingData = TrainingData.Take((TrainingData.Length / 100) * value).ToArray();
             Shuffle(ValidationData);
-            ValidationData = ValidationData.Take((ValidationData.Length / 100) * value).ToArray();
+            //ValidationData = ValidationData.Take((ValidationData.Length / 100) * value).ToArray();
         }
 
         public void Shuffle(Input[] Array)
@@ -100,6 +105,16 @@ namespace vNet
                     newInput[j] = ValidationData[i].Data[mask[j]];
                 }
                 ValidationData[i].Data = newInput;
+            }
+
+            for (int i = 0; i < DevSet.Length; i++)
+            {
+                var newInput = new float[mask.Length];
+                for (int j = 0; j < mask.Length; j++)
+                {
+                    newInput[j] = DevSet[i].Data[mask[j]];
+                }
+                DevSet[i].Data = newInput;
             }
 
             connectionMask = mask;

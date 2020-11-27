@@ -1,5 +1,8 @@
-﻿namespace vNet
+﻿using System;
+
+namespace vNet
 {
+    [Serializable]
     public struct Input
     {
         public float[] TruthLabel { get; set; }

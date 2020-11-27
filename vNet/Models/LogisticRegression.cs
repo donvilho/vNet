@@ -15,16 +15,18 @@ namespace vNet
     {
         public Dataset Data { get; set; }
 
-        public LogisticRegression(Dataset dataset, int DropoutLowerThreshold = 0, int DropoutUpperThreshold = 0, bool L2 = false, bool constInit = false, float initVal = 1f)
+        public Trainer NetModel;
+
+        public LogisticRegression(Dataset dataset, int DropoutLowerThreshold = 0, int DropoutUpperThreshold = 0)
         {
             Data = dataset;
-
+            NetModel = null;
             // Connection mask
 
-            if (DropoutLowerThreshold != 0 & DropoutUpperThreshold != 0)
+            if (DropoutLowerThreshold != 0 | DropoutUpperThreshold != 0)
             {
                 var temp = new List<int>();
-                var interMidLayer = new int[dataset.InputLenght];
+                var interMidLayer = new float[dataset.InputLenght];
 
                 for (int i = 0; i < dataset.TrainingData.Length; i++)
                 {
@@ -34,9 +36,16 @@ namespace vNet
                     }
                 }
 
+                /*
                 for (int i = 0; i < interMidLayer.Length; i++)
                 {
-                    if (interMidLayer[i] > DropoutLowerThreshold & interMidLayer[i] < DropoutUpperThreshold)
+                    interMidLayer[i] /= dataset.TrainingData.Length;
+                }
+                */
+
+                for (int i = 0; i < interMidLayer.Length; i++)
+                {
+                    if (interMidLayer[i] > DropoutLowerThreshold | interMidLayer[i] < DropoutUpperThreshold)
                     {
                         temp.Add(i);
                     }
@@ -46,188 +55,100 @@ namespace vNet
             }
         }
 
-        public void TrainModel(int epoch, float learningRate, int stepDecay = 0, float momentum = 0, int miniBatch = 1)
+        public void RunModel(string path)
+        {
+            Console.WriteLine("\n\nRunning model for file or files in path " + path + "\n");
+
+            if (NetModel != null)
+            {
+                NetModel.Run(path);
+            }
+
+            Process.Start(path);
+        }
+
+        public void TrainModel(int epoch, float learningRate, bool l2, int stepDecay, float momentum, int miniBatch)
         {
             if (miniBatch == 0) { miniBatch = Data.TrainingData.Length; }
 
             Console.WriteLine("-----Starting training-----\n" +
                 "<-Parameters->\n" +
                 "Epoch: {0}\n" +
-                "Batchsize: {3}\n" +
+                "Batchsize: {2}\n" +
                 "Learningrate: {1}\n" +
-                "Momentum: {4}\n",
+                "Momentum: {3}\n",
                 epoch, learningRate, miniBatch, momentum);
 
             var trainer = new Trainer(Data);
-            var result = trainer.Train(Data, epoch, learningRate, miniBatch, momentum, stepDecay);
+            trainer.Init(learningRate, miniBatch, epoch, momentum, stepDecay, l2);
+            //var result = trainer.Train(Data, epoch, learningRate, miniBatch, momentum, stepDecay, l2);
 
-            Plot.Graph(result.Item1, learningRate, miniBatch, result.Item2);
+            trainer.Train(Data, true, false);
+
+            var result = trainer.GetResult();
+
+            Plot.Graph(result.Item2, learningRate, miniBatch, result.Item6);
+
+            NetModel = trainer;
         }
 
-        public void MultiTraining(TrainingSetup setup, int epoch, float learningRate, int stepDecay = 0, float momentum = 0, int miniBatch = 1, bool validatewithTS = false)
+        public void MultiTraining()
         {
-            if (miniBatch == 0) { miniBatch = Data.TrainingData.Length; }
+            var l2 = new bool[] { true, false };
+            var lrs = new float[] { .1f, 0.01f };
+            var bts = new int[] { 8, 16, 32, 64, 128, 256, 512 };
+            var epochs = new int[] { 50 };
+            var moms = new float[] { 0.1f, .5f, 0f };
+            var decay = new int[] { 50 };
 
-            var cBag = new ConcurrentBag<(double[,], int, float, int)>();
+            var Models = new List<Trainer>();
 
-            var trainer = new ThreadLocal<Trainer>(() => new Trainer(Data));
-            Parallel.For(0, setup.learningrates.Length, i =>
-             {
-                 for (int j = 0; j < setup.batches.Length; j++)
-                 {
-                     Console.WriteLine(Thread.CurrentThread.ManagedThreadId + " started " + setup.learningrates[i] + " - " + setup.batches[j]);
-                     cBag.Add(trainer.Value.Train(Data, epoch, setup.learningrates[i], setup.batches[j], momentum, stepDecay));
-                     Console.WriteLine(Thread.CurrentThread.ManagedThreadId + " done");
-                 };
-             });
-
-            Console.WriteLine();
-
-            Plot.GraphList(cBag.ToList());
-        }
-
-        /// <summary>
-        ///
-        /// </summary>
-        /// <param name="epoch"></param>
-        /// <param name="validateWithTrainingSet"></param>
-        /// <returns>(Loss,Accuracy)</returns>
-
-        /*
-        private (double[,], int) Trainer2BU(int epoch, float lr, int batch, float momentum, int stepDecay)
-        {
-            var PlotData = new double[epoch, 3];
-            float HighestResult = 0;
-            int HighestResultEpoch = 0;
-            int BatchCount = 0;
-            int StepDecayCounter = 0;
-
-            for (int e = 0; e < epoch; e++)
+            for (int i = 0; i < lrs.Length; i++)
             {
-                Data.Shuffle(Data.TrainingData);
-                var trainingAccuracy = 0f;
-                //Training loop
-                foreach (var input in Data.TrainingData)
+                for (int j = 0; j < bts.Length; j++)
                 {
-                    for (int i = 0; i < Neurons.Length; i++)
+                    for (int k = 0; k < epochs.Length; k++)
                     {
-                        Neurons[i].ForwardCalculation(input.Data);
-                    }
-
-                    //prediction
-                    Output = activation.Activate(Neurons);
-
-                    trainingAccuracy += Output.ToList().IndexOf(Output.Max()) == input.TruthLabel.ToList().IndexOf(input.TruthLabel.Max()) ? 1 : 0;
-
-                    for (int i = 0; i < Neurons.Length; i++)
-                    {
-                        Neurons[i].Derivate = activation.Derivate(Output[i], input.TruthLabel[i]);
-                        Neurons[i].Backpropagate(input.Data);
-                    }
-
-                    BatchCount++;
-
-                    if (BatchCount == batch)
-                    {
-                        for (int i = 0; i < Neurons.Length; i++)
+                        for (int l = 0; l < moms.Length; l++)
                         {
-                            Neurons[i].AdjustWeights(batch, lr, momentum);
+                            for (int m = 0; m < l2.Length; m++)
+                            {
+                                for (int n = 0; n < decay.Length; n++)
+                                {
+                                    //combinations.Add((lrs[i], bts[j], epochs[k], moms[l], l2[m]));
+                                    //new Trainer(Data).Init(param.Item1, param.Item2, param.Item3, param.Item4, param.Item3, param.Item5);
+                                    var mdl = new Trainer(Data);
+                                    mdl.Init(lrs[i], bts[j], epochs[k], moms[l], decay[n], l2[m]);
+                                    Models.Add(mdl);
+                                }
+                            }
                         }
-
-                        BatchCount = 0;
                     }
-                }
-
-                PlotData[e, 2] = trainingAccuracy / Data.TrainingData.Length;
-                var result = TestModel();
-
-                PlotData[e, 0] = result.Item1;
-                PlotData[e, 1] = result.Item2;
-
-                if (result.Item2 > HighestResult)
-                {
-                    HighestResult = result.Item2;
-                    HighestResultEpoch = e;
-                }
-
-                StepDecayCounter++;
-
-                if (StepDecayCounter == stepDecay)
-                {
-                    lr *= .75f;
-                    StepDecayCounter = 0;
                 }
             }
 
-            return (PlotData, HighestResultEpoch);
-        }
-        */
+            Console.WriteLine("Total models running: " + Models.Count());
 
-        private void TrainerBU(float momentum, bool validateWithTrainingSet)
-        {
-            /*
-            int BatchCount = 0;
+            GC.Collect();
 
-            int StepDecayCounter = 0;
-
-            for (int e = 0; e < Epoch; e++)
+            Parallel.ForEach(Models, (model) =>
             {
-                //timer.Restart();
-                Data.Shuffle(Data.TrainingData);
+                model.Train(Data, false, true);
+            });
 
-                //Training loop
-                foreach (var input in Data.TrainingData)
-                {
-                    for (int i = 0; i < Neurons.Length; i++)
-                    {
-                        Neurons[i].ForwardCalculation(input.Data);
-                    }
+            var Results = new List<(float, double[,], float, float, int, int, bool)>();
 
-                    //prediction
-                    Output = activation.Activate(Neurons);
+            Models.ToList().ForEach(x => Results.Add(x.GetResult()));
 
-                    PlotData[e, 2] += loss.Calculate(Output, input.TruthLabel);
+            var BestModel = Models.OrderByDescending(x => x.HighestResult).First();
 
-                    //var pos = Output.ToList().IndexOf(Output.Max());
+            Console.WriteLine(BestModel.GetResult().ToString());
 
-                    //var pred = new float[Classes];
+            Plot.GraphList(Results);
 
-                    //pred[pos] = 1;
+            NetModel = BestModel;
 
-                    for (int i = 0; i < Neurons.Length; i++)
-                    {
-                        Neurons[i].Derivate = activation.Derivate(Output[i], input.TruthLabel[i]);
-                        //Neurons[i].Derivate = activation.Derivate(pred[i], input.TruthLabel[i]);
-                        Neurons[i].Backpropagate(input.Data);
-                    }
-
-                    BatchCount++;
-
-                    if (BatchCount == MiniBatch)
-                    {
-                        for (int i = 0; i < Neurons.Length; i++)
-                        {
-                            Neurons[i].AdjustWeights(MiniBatch, LearningRate, momentum);
-                        }
-
-                        BatchCount = 0;
-                    }
-                }
-
-                PlotData[e, 2] /= Data.TrainingData.Length;
-                TestModel(e, validateWithTrainingSet, plot: false);
-
-                StepDecayCounter++;
-
-                if (StepDecayCounter == StepDecay)
-                {
-                    LearningRate *= .75f;
-                    StepDecayCounter = 0;
-                }
-            }
-
-            TestModel(Epoch, validateWithTrainingSet: false, plot: true);
-            */
+            //BestModel.FocusedTraining(Data);
         }
     }
 }

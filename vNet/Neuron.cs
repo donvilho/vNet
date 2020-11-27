@@ -20,12 +20,12 @@ namespace vNet
         private float[] WeightCache, PrevUpdateRate;
         private bool DeltaSet, L2;
 
-        public Neuron(int connections, bool constInit, float initVal, bool l2)
+        public Neuron(int connections, float initVal)
         {
             Z = 0;
             A = 0;
             Bias = 1;
-            Weights = Utils.Generate_Vector(connections, setNumber: constInit, number: initVal);
+            Weights = Utils.Generate_Vector(connections, number: initVal);
             WeightCache = new float[connections];
             Derivates = new float[connections];
             BiasCache = 0;
@@ -33,15 +33,14 @@ namespace vNet
             PrevUpdateBias = 0;
             DeltaSet = false;
             ConnectionPattern = null;
-            L2 = l2;
         }
 
-        public Neuron(int[] connectionPattern, bool constInit, float initVal, bool l2)
+        public Neuron(int[] connectionPattern, float initVal)
         {
             Z = 0;
             A = 0;
             Bias = 1;
-            Weights = Utils.Generate_Vector(connectionPattern.Length, setNumber: constInit, number: initVal);
+            Weights = Utils.Generate_Vector(connectionPattern.Length, number: initVal);
             WeightCache = new float[connectionPattern.Length];
             Derivates = new float[connectionPattern.Length];
             BiasCache = 0;
@@ -49,7 +48,6 @@ namespace vNet
             PrevUpdateBias = 0;
             DeltaSet = false;
             ConnectionPattern = connectionPattern;
-            L2 = l2;
         }
 
         public void ForwardCalculation(float[] input)
@@ -90,23 +88,17 @@ namespace vNet
         public void Backpropagate(float[] inputToNeuron)
         {
             BiasCache += Bias * Derivate;
+            //WeightCache = SimdVectorAdd(WeightCache, SimdVectorScalar(inputToNeuron, Derivate));
             //Derivates = SimdVectorScalar(Weights, Derivate);
 
-            if (Vector.IsHardwareAccelerated)
+            for (int i = 0; i < WeightCache.Length; i++)
             {
-                WeightCache = SimdVectorAdd(WeightCache, SimdVectorScalar(inputToNeuron, Derivate));
-            }
-            else
-            {
-                for (int i = 0; i < WeightCache.Length; i++)
-                {
-                    WeightCache[i] += inputToNeuron[i] * Derivate;
-                    //Derivates[i] = Weights[i] * Derivate;
-                }
+                WeightCache[i] += inputToNeuron[i] * Derivate;
+                Derivates[i] = Weights[i] * Derivate;
             }
         }
 
-        public void AdjustWeights(int mbatch, float learningrate, float momentum)
+        public void AdjustWeights(int mbatch, float learningrate, float momentum, bool L2)
         {
             var len = Weights.Length;
 
