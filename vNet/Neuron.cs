@@ -17,8 +17,9 @@ namespace vNet
         //privates
         private float Bias, BiasCache, PrevUpdateBias;
 
-        private float[] WeightCache, PrevUpdateRate;
-        private bool DeltaSet, L2;
+        private readonly float[] WeightCache;
+        private readonly float[] PrevUpdateRate;
+        private bool DeltaSet;
 
         public Neuron(int connections)
         {
@@ -163,134 +164,6 @@ namespace vNet
                 Bias -= PrevUpdateBias + BiasMomentum;
                 BiasCache = 0;
             }
-        }
-
-        private float[] SimdVectorAddScalar(float[] result, float[] left, float right)
-        {
-            var offset = Vector<float>.Count;
-            int i = 0;
-            for (i = 0; i + offset < left.Length; i += offset)
-            {
-                var v1 = new Vector<float>(left, i);
-                var res = new Vector<float>(result, i);
-                Vector.Add(res, Vector.Multiply(v1, right)).CopyTo(result, i);
-            }
-
-            //remaining items
-            for (; i < left.Length; ++i)
-            {
-                result[i] += left[i] * right;
-            }
-
-            return result;
-        }
-
-        private float[] SimdVectorScalar(float[] left, float right)
-        {
-            var offset = Vector<float>.Count;
-            float[] result = new float[left.Length];
-            int i = 0;
-            for (i = 0; i + offset < left.Length; i += offset)
-            {
-                var v1 = new Vector<float>(left, i);
-                Vector.Multiply(v1, right).CopyTo(result, i);
-            }
-
-            //remaining items
-            for (; i < left.Length; ++i)
-            {
-                result[i] += left[i] * right;
-            }
-
-            return result;
-        }
-
-        private float[] SimdVectorAdd(float[] left, float[] right)
-        {
-            var offset = Vector<float>.Count;
-            float[] result = new float[left.Length];
-            int i = 0;
-            for (i = 0; i + offset < left.Length; i += offset)
-            {
-                var v1 = new Vector<float>(left, i);
-                var v2 = new Vector<float>(right, i);
-
-                Vector.Add(v1, v2).CopyTo(result, i);
-            }
-
-            //remaining items
-            for (; i < left.Length; ++i)
-            {
-                result[i] = left[i] + right[i];
-            }
-
-            return result;
-        }
-
-        private float[] SimdVectorSub(float[] left, float[] right)
-        {
-            var offset = Vector<float>.Count;
-            float[] result = new float[left.Length];
-            int i = 0;
-            for (i = 0; i + offset < left.Length; i += offset)
-            {
-                var v1 = new Vector<float>(left, i);
-                var v2 = new Vector<float>(right, i);
-
-                Vector.Subtract(v1, v2).CopyTo(result, i);
-            }
-
-            //remaining items
-            for (; i < left.Length; ++i)
-            {
-                result[i] = left[i] - right[i];
-            }
-
-            return result;
-        }
-
-        private float[] SimdVectorDivision(float[] left, float[] right)
-        {
-            var offset = Vector<float>.Count;
-            float[] result = new float[left.Length];
-            int i = 0;
-            for (i = 0; i + offset < left.Length; i += offset)
-            {
-                var v1 = new Vector<float>(left, i);
-                var v2 = new Vector<float>(right, i);
-
-                Vector.Divide(v1, v2).CopyTo(result, i);
-            }
-
-            //remaining items
-            for (; i < left.Length; ++i)
-            {
-                result[i] = left[i] / right[i];
-            }
-
-            return result;
-        }
-
-        private float SimdVectorProd(float[] left, float[] right)
-        {
-            var offset = Vector<float>.Count;
-            float result = 0;
-            int i = 0;
-            for (i = 0; i + offset < left.Length; i += offset)
-            {
-                var v1 = new Vector<float>(left, i);
-                var v2 = new Vector<float>(right, i);
-
-                result += Vector.Dot(v1, v2);
-            }
-
-            //remaining items
-            for (; i < left.Length; ++i)
-            {
-                result += left[i] * right[i];
-            }
-
-            return result;
         }
     }
 }

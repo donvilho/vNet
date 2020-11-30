@@ -169,26 +169,6 @@ namespace vNet
             return (362880 + x * (362880 + x * (181440 + x * (60480 + x * (15120 + x * (3024 + x * (504 + x * (72 + x * (9 + x))))))))) * 2.75573192e-6;
         }
 
-        public static (float[], float[], string)[][] SplitToMiniBatch((float[], float[], string)[] data, int mBatch)
-        {
-            var batchCount = data.Length / mBatch;
-            var result = new List<(float[], float[], string)[]>();
-
-            var test = Partitioner.Create(0, mBatch);
-
-            for (int i = 0; i < batchCount; i++)
-            {
-                result.Add((data.Skip(i * mBatch).Take(mBatch)).ToArray());
-            }
-
-            if (data.Length % mBatch != 0)
-            {
-                result.Add((data.Skip(batchCount * mBatch).Take(data.Length % mBatch)).ToArray());
-            }
-
-            return result.ToArray();
-        }
-
         public static void ShuffleDataMatrix((float[,], int[,]) Data)
         {
             var rand = new Random();
