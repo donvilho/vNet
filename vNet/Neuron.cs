@@ -24,7 +24,7 @@ namespace vNet
         {
             Z = 0;
             A = 0;
-            Bias = 1;
+            Bias = 0.5f;
             Weights = Utils.Generate_Vector(connections, number: initVal);
             WeightCache = new float[connections];
             Derivates = new float[connections];
@@ -39,7 +39,7 @@ namespace vNet
         {
             Z = 0;
             A = 0;
-            Bias = 1;
+            Bias = 0.5f;
             Weights = Utils.Generate_Vector(connectionPattern.Length, number: initVal);
             WeightCache = new float[connectionPattern.Length];
             Derivates = new float[connectionPattern.Length];

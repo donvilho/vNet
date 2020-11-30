@@ -15,25 +15,26 @@ namespace vNet
             //var testset = @"C:\Users\ville\Downloads\mnist_png.tar\mnist_png\testing";
             //var dataset = new Dataset(trainingset, testset);
 
-            var dataset = Utils.DatasetFromBinary("MnistFull.bin");
+            //Utils.DatasetToBinary(dataset, "MnistFull");
 
-            //dataset.ReduceToPercentage(10);
+            //var dataset = Utils.DatasetFromBinary("MnistFull.bin");
 
-            var Model = new LogisticRegression(
-                dataset,
-                DropoutLowerThreshold: 0,
-                DropoutUpperThreshold: 0);
+            //dataset.ReduceToPercentage(30);
 
-            //Model.MultiTraining();
+            var Model = new LogisticRegression();
 
-            Model.TrainModel(epoch: 300,
-               learningRate: .01f,
-               stepDecay: 150,
-               momentum: .1f,
-               miniBatch: 128,
-               l2: true);
+            //Model.MultiTraining("MnistFull.bin");
 
-            Model.RunModel(@"C:\Users\ville\Downloads\mnist_png.tar\mnist_png\c");
+            Model.TrainModel(
+               path: "MnistFull.bin",
+               epoch: 50,
+               learningRate: 0.1f,
+               stepDecay: 0,
+               momentum: 0f,
+               miniBatch: 0,
+               l2: false);
+
+            //Model.RunModel(@"C:\Users\ville\Downloads\mnist_png.tar\mnist_png\c");
 
             Console.ReadKey();
 

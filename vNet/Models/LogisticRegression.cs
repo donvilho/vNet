@@ -13,46 +13,11 @@ namespace vNet
 {
     public class LogisticRegression
     {
-        public Dataset Data { get; set; }
-
         public Trainer NetModel;
 
-        public LogisticRegression(Dataset dataset, int DropoutLowerThreshold = 0, int DropoutUpperThreshold = 0)
+        public LogisticRegression()
         {
-            Data = dataset;
             NetModel = null;
-            // Connection mask
-
-            if (DropoutLowerThreshold != 0 | DropoutUpperThreshold != 0)
-            {
-                var temp = new List<int>();
-                var interMidLayer = new float[dataset.InputLenght];
-
-                for (int i = 0; i < dataset.TrainingData.Length; i++)
-                {
-                    for (int j = 0; j < dataset.InputLenght; j++)
-                    {
-                        interMidLayer[j] += dataset.TrainingData[i].Data[j] > 0 ? 1 : 0;
-                    }
-                }
-
-                /*
-                for (int i = 0; i < interMidLayer.Length; i++)
-                {
-                    interMidLayer[i] /= dataset.TrainingData.Length;
-                }
-                */
-
-                for (int i = 0; i < interMidLayer.Length; i++)
-                {
-                    if (interMidLayer[i] > DropoutLowerThreshold | interMidLayer[i] < DropoutUpperThreshold)
-                    {
-                        temp.Add(i);
-                    }
-                }
-
-                Data.ApplyConnectionMask(temp.ToArray());
-            }
         }
 
         public void RunModel(string path)
@@ -67,10 +32,8 @@ namespace vNet
             Process.Start(path);
         }
 
-        public void TrainModel(int epoch, float learningRate, bool l2, int stepDecay, float momentum, int miniBatch)
+        public void TrainModel(string path, int epoch, float learningRate, bool l2, int stepDecay, float momentum, int miniBatch)
         {
-            if (miniBatch == 0) { miniBatch = Data.TrainingData.Length; }
-
             Console.WriteLine("-----Starting training-----\n" +
                 "<-Parameters->\n" +
                 "Epoch: {0}\n" +
@@ -79,26 +42,28 @@ namespace vNet
                 "Momentum: {3}\n",
                 epoch, learningRate, miniBatch, momentum);
 
-            var trainer = new Trainer(Data);
+            var trainer = new Trainer(path);
             trainer.Init(learningRate, miniBatch, epoch, momentum, stepDecay, l2);
             //var result = trainer.Train(Data, epoch, learningRate, miniBatch, momentum, stepDecay, l2);
 
-            trainer.Train(Data, true, false);
+            trainer.Train(true, false);
 
             var result = trainer.GetResult();
 
             Plot.Graph(result.Item2, learningRate, miniBatch, result.Item6);
 
+            trainer.PlotModel();
+
             NetModel = trainer;
         }
 
-        public void MultiTraining()
+        public void MultiTraining(string path)
         {
-            var l2 = new bool[] { true, false };
-            var lrs = new float[] { .1f, 0.01f };
-            var bts = new int[] { 8, 16, 32, 64, 128, 256, 512 };
+            var l2 = new bool[] { false };
+            var lrs = new float[] { 0.01f, };
+            var bts = new int[] { 16, 32, 64, 128 };
             var epochs = new int[] { 50 };
-            var moms = new float[] { 0.1f, .5f, 0f };
+            var moms = new float[] { 0f };
             var decay = new int[] { 50 };
 
             var Models = new List<Trainer>();
@@ -117,7 +82,7 @@ namespace vNet
                                 {
                                     //combinations.Add((lrs[i], bts[j], epochs[k], moms[l], l2[m]));
                                     //new Trainer(Data).Init(param.Item1, param.Item2, param.Item3, param.Item4, param.Item3, param.Item5);
-                                    var mdl = new Trainer(Data);
+                                    var mdl = new Trainer(path);
                                     mdl.Init(lrs[i], bts[j], epochs[k], moms[l], decay[n], l2[m]);
                                     Models.Add(mdl);
                                 }
@@ -128,12 +93,11 @@ namespace vNet
             }
 
             Console.WriteLine("Total models running: " + Models.Count());
-
             GC.Collect();
 
             Parallel.ForEach(Models, (model) =>
             {
-                model.Train(Data, false, true);
+                model.Train(false, false);
             });
 
             var Results = new List<(float, double[,], float, float, int, int, bool)>();
@@ -142,7 +106,7 @@ namespace vNet
 
             var BestModel = Models.OrderByDescending(x => x.HighestResult).First();
 
-            Console.WriteLine(BestModel.GetResult().ToString());
+            Console.WriteLine("Highest model:\n" + BestModel.GetValue());
 
             Plot.GraphList(Results);
 

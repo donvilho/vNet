@@ -1,5 +1,8 @@
 ﻿using Microsoft.VisualBasic.FileIO;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -15,25 +18,33 @@ namespace vNet
         public float[] Output { get; set; }
         public Activation activation { get; set; }
         public Loss loss { get; set; }
-        private string[] Labels;
 
         public float HighestResult;
+
+        private int[] Mask;
 
         private int Epoch, Batch, StepDecay, HighestEpoch;
         private float Lr, Momentum, InitLr, BestLoss;
         private bool L2;
         private double[,] PlotData;
 
-        public Trainer(Dataset Data)
+        private Dataset Data;
+
+        public Trainer(string path)
         {
+            Data = Utils.DatasetFromBinary(path);
+
             //Console.WriteLine("new trainer");
             Classes = Data.classCount;
             Neurons = new Neuron[Classes];
             Output = new float[Classes];
             BestLoss = 0f;
 
+            Mask = null;
+
             if (Data.connectionMask != null)
             {
+                Mask = Data.connectionMask;
                 for (int i = 0; i < Neurons.Length; i++)
                 {
                     Neurons[i] = new Neuron(Data.connectionMask, 0);
@@ -69,6 +80,12 @@ namespace vNet
                 for (int i = 0; i < files.Length; i++)
                 {
                     var file = Utils.ImageToArray(files[i]);
+
+                    if (Mask != null)
+                    {
+                        file = Utils.ApplyConnectionMask(Mask, file);
+                    }
+
                     //forward
                     for (int j = 0; j < Neurons.Length; j++)
                     {
@@ -110,28 +127,34 @@ namespace vNet
             InitLr = lr;
             Momentum = momentum;
             L2 = l2;
-            PlotData = new double[epoch, 3];
+            PlotData = new double[epoch, 4];
             HighestResult = 0;
             HighestEpoch = 0;
+            if (batch == 0) { Batch = Data.TrainingData.Length; }
         }
 
-        public void Train(Dataset dataset, bool print, bool DevSet)
+        public void Train(bool print, bool DevSet)
         {
-            var Data = DevSet == true ? dataset.DevSet : dataset.TrainingData;
-
-            Batch = Batch == 0 ? Data.Length : Batch;
+            var dataset = DevSet == true ? Data.DevSet : Data.TrainingData;
+            Batch = Batch == 0 ? dataset.Length : Batch;
             int BatchCount = 0;
             int StepDecayCounter = 0;
-            Console.WriteLine(Thread.CurrentThread.ManagedThreadId + " ");
+            var epochTimer = new Stopwatch();
+            var totalTimer = new Stopwatch();
+
+            var avgTime = 0f;
+
+            totalTimer.Start();
 
             for (int e = 0; e < Epoch; e++)
             {
-                dataset.Shuffle(Data);
+                epochTimer.Restart();
+                Data.Shuffle(dataset);
 
                 var trainingAccuracy = 0f;
-
+                var result = TestModel(Data);
                 //Training loop
-                foreach (var input in Data)
+                foreach (var input in dataset)
                 {
                     for (int i = 0; i < Neurons.Length; i++)
                     {
@@ -171,15 +194,17 @@ namespace vNet
                     BatchCount = 0;
                 }
 
-                var result = TestModel(dataset);
-
-                PlotData[e, 2] = trainingAccuracy / Data.Length;
+                PlotData[e, 2] = trainingAccuracy / (dataset.Length - 1);
                 PlotData[e, 0] = result.Item1;
                 PlotData[e, 1] = result.Item2;
+                PlotData[e, 3] = totalTimer.Elapsed.TotalSeconds;
+
+                avgTime += epochTimer.ElapsedMilliseconds;
 
                 if (print)
                 {
-                    Console.WriteLine("E: " + e + " Loss: " + result.Item1 + " Test acc: " + result.Item2 + " Training acc: " + Math.Round(PlotData[e, 2], 3) + "  Lr: " + Lr);
+                    Console.WriteLine("E: " + e + " Loss: " + result.Item1 + " Test acc: " + result.Item2);
+                    //Console.WriteLine("E: " + e + " Loss: " + result.Item1 + " Test acc: " + result.Item2 + " Training acc: " + Math.Round(PlotData[e, 2], 3));
                 }
 
                 if (BestLoss == 0)
@@ -198,20 +223,21 @@ namespace vNet
                 }
                 else if (HighestResult - result.Item2 > 0.05)
                 {
-                    Console.WriteLine("break");
-                    HighestResult = 0;
                     return;
                     //return (PlotData, HighestEpoch, initLr, Batch, 0f, L2, Momentum);
                 }
 
                 StepDecayCounter++;
 
-                if (StepDecayCounter == StepDecay)
+                if (StepDecay > 0 & StepDecayCounter == StepDecay)
                 {
                     Lr *= .95f;
                     StepDecayCounter = 0;
                 }
             }
+
+            totalTimer.Stop();
+            Console.WriteLine("Lr: " + InitLr + " Batch: " + Batch + " -- Average epoch time: " + avgTime / Epoch + " ms --  Total time was: " + Math.Round(totalTimer.Elapsed.TotalSeconds, 3) + " s");
 
             //return (PlotData, HighestResultEpoch, initLr, Batch, HighestResult, L2, Momentum);
         }
@@ -342,9 +368,97 @@ namespace vNet
             return (Loss, Accuracy);
         }
 
+        public void PlotModel()
+        {
+            var classcount = new int[Classes];
+            var TestPlot = new double[Classes, Classes];
+            var Prediction = new int[Classes][];
+            var Heatmap = new List<(int, int)>();
+            var testx = new List<int>();
+            var testy = new List<int>();
+            var faults = new int[Classes];
+            var correct = new int[Classes];
+            var Misclassified = new List<int>();
+
+            for (int i = 0; i < Prediction.Length; i++)
+            {
+                Prediction[i] = new int[Classes];
+            }
+
+            var plt = new ScottPlot.Plot(800, 600);
+            var pltMissclass = new ScottPlot.Plot(800, 600);
+
+            Heatmap.Clear();
+
+            foreach (var input in Data.ValidationData)
+            {
+                //forward
+                for (int i = 0; i < Neurons.Length; i++)
+                {
+                    Neurons[i].ForwardCalculation(input.Data);
+                }
+
+                //activate
+                Output = activation.Activate(Neurons);
+
+                // Convert output
+                int position = Output.ToList().IndexOf(Output.Max());
+                var yPos = input.TruthLabel.ToList().IndexOf(input.TruthLabel.Max());
+                classcount[yPos]++;
+
+                if (yPos != position)
+                {
+                    Prediction[yPos][position]++;
+
+                    pltMissclass.PlotBitmap(new Bitmap(Image.FromFile(input.Path)), yPos, position, alignment: ScottPlot.ImageAlignment.middleCenter);
+                }
+
+                Heatmap.Add((yPos, position));
+                TestPlot[yPos, position]++;
+
+                testx.Add(yPos);
+                testy.Add(position);
+            }
+
+            var plottables = plt.GetPlottables();
+
+            for (int i = 0; i < TestPlot.GetLength(0); i++)
+            {
+                for (int j = 0; j < TestPlot.GetLength(1); j++)
+                {
+                    var multiplier = Math.Round(TestPlot[i, j] / classcount[i], 3);
+
+                    if (multiplier > 0)
+                    {
+                        plottables.Add(new ScottPlot.PlottableText(multiplier.ToString(), i, j,
+                        color: Color.Black, fontName: "arial", fontSize: 15,
+                        bold: (i == j ? true : false), label: "", alignment: ScottPlot.TextAlignment.middleCenter,
+                        rotation: 0, frame: false, frameColor: Color.Green));
+                    }
+                }
+            }
+
+            var temp = classcount.Select(x => x.ToString()).ToArray();
+
+            pltMissclass.Title("X: truth, Y: wrong prediction with image");
+            //pltMissclass.XTicks(temp);
+            pltMissclass.Grid(xSpacing: 1, ySpacing: 1);
+            pltMissclass.SaveFig("missclass.png");
+            Process.Start(new ProcessStartInfo("missclass.png") { UseShellExecute = true });
+
+            plt.Grid(xSpacing: 1, ySpacing: 1);
+            plt.SaveFig("HeatmapImage.png");
+            Process.Start(new ProcessStartInfo("HeatmapImage.png") { UseShellExecute = true });
+        }
+
         public (float, double[,], float, float, int, int, bool) GetResult()
         {
             return (HighestResult, PlotData, InitLr, Momentum, Batch, HighestEpoch, L2);
+        }
+
+        public string GetValue()
+        {
+            return "Lr: " + InitLr + " Batch: " + Batch + " Accuracy: " + HighestResult + " E: " + HighestEpoch;
         }
     }
 }

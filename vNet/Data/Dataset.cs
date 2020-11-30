@@ -53,7 +53,19 @@ namespace vNet
             Shuffle(TrainingData);
             TrainingData = TrainingData.Take((TrainingData.Length / 100) * value).ToArray();
             Shuffle(ValidationData);
-            //ValidationData = ValidationData.Take((ValidationData.Length / 100) * value).ToArray();
+            ValidationData = ValidationData.Take((ValidationData.Length / 100) * value).ToArray();
+        }
+
+        public Dataset Copy()
+        {
+            Dataset newDataset = (Dataset)this.MemberwiseClone();
+            newDataset.InputLenght = this.InputLenght;
+            newDataset.DevSet = this.DevSet;
+            newDataset.TrainingData = this.TrainingData;
+            newDataset.ValidationData = this.ValidationData;
+            newDataset.classCount = this.classCount;
+            newDataset.connectionMask = this.connectionMask;
+            return newDataset;
         }
 
         public void Shuffle(Input[] Array)
@@ -80,7 +92,7 @@ namespace vNet
             {
                 for (int j = 0; j < data[i].Data.Length; j++)
                 {
-                    data[i].Data[j] = data[i].Data[j] > 200 ? 1 : 0;
+                    data[i].Data[j] = data[i].Data[j] > 150 ? 1 : 0;
                 }
             }
         }

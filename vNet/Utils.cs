@@ -15,7 +15,7 @@ namespace vNet
 {
     internal class Utils
     {
-        public static Dataset DatasetFromBinary(string path)
+        public static Dataset DatasetFromBinary(string path, int DropoutLowerThreshold = 0, int DropoutUpperThreshold = 0)
         {
             try
             {
@@ -23,6 +23,37 @@ namespace vNet
                 IFormatter formatter = new BinaryFormatter();
                 var dataset = (Dataset)formatter.Deserialize(Reader);
                 Reader.Close();
+
+                if (DropoutLowerThreshold != 0 | DropoutUpperThreshold != 0)
+                {
+                    var temp = new List<int>();
+                    var interMidLayer = new float[dataset.InputLenght];
+
+                    for (int i = 0; i < dataset.TrainingData.Length; i++)
+                    {
+                        for (int j = 0; j < dataset.InputLenght; j++)
+                        {
+                            interMidLayer[j] += dataset.TrainingData[i].Data[j] > 0 ? 1 : 0;
+                        }
+                    }
+
+                    /*
+                    for (int i = 0; i < interMidLayer.Length; i++)
+                    {
+                        interMidLayer[i] /= dataset.TrainingData.Length;
+                    }
+                    */
+
+                    for (int i = 0; i < interMidLayer.Length; i++)
+                    {
+                        if (interMidLayer[i] > DropoutLowerThreshold | interMidLayer[i] < DropoutUpperThreshold)
+                        {
+                            temp.Add(i);
+                        }
+                    }
+
+                    dataset.ApplyConnectionMask(temp.ToArray());
+                }
 
                 return dataset;
             }
@@ -365,7 +396,7 @@ namespace vNet
             return value;
         }
 
-        public static float[] Generate_Vector(int size, double min = 0.1, double max = 0.9, float number = 0)
+        public static float[] Generate_Vector(int size, double min = 0.001, double max = 1, float number = 0)
         {
             /// super randomizer
             /// järkyttävä overkill mutta olkoot
@@ -455,6 +486,16 @@ namespace vNet
             return array;
         }
 
+        public static float[] ApplyConnectionMask(int[] mask, float[] input)
+        {
+            var newInput = new float[mask.Length];
+            for (int j = 0; j < mask.Length; j++)
+            {
+                newInput[j] = input[mask[j]];
+            }
+            return newInput;
+        }
+
         public static float[] ImageToArray(string path, int scale = 1, bool save = false)
         {
             Bitmap img = (Bitmap)Image.FromFile(path);
@@ -484,7 +525,7 @@ namespace vNet
                     float color = (pixel.R + pixel.B + pixel.G) / 3;
 
                     //Result[img.Height * i + j] = color;
-                    Result[img.Height * i + j] = color / 255;
+                    Result[img.Height * i + j] = color / 254;
                 }
             }
 
