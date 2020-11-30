@@ -45,6 +45,11 @@ namespace vNet.Activations
             return result;
         }
 
+        public override int Compare(float[] n, float[] t)
+        {
+            return (n.ToList().IndexOf(n.Max()) == t.ToList().IndexOf(t.Max()) ? 1 : 0);
+        }
+
         public override float Derivate(float n, float t)
         {
             /*

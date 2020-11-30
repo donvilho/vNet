@@ -10,7 +10,12 @@ namespace vNet.LossFunctions
     {
         public override float Calculate(float[] n, float[] t)
         {
-            throw new NotImplementedException();
+            var result = 0f;
+            for (int i = 0; i < n.Length; i++)
+            {
+                result += n[i] - t[i];
+            }
+            return result * result;
         }
     }
 }

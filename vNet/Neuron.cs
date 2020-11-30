@@ -20,12 +20,12 @@ namespace vNet
         private float[] WeightCache, PrevUpdateRate;
         private bool DeltaSet, L2;
 
-        public Neuron(int connections, float initVal)
+        public Neuron(int connections)
         {
             Z = 0;
             A = 0;
             Bias = 0.5f;
-            Weights = Utils.Generate_Vector(connections, number: initVal);
+            Weights = Utils.Generate_Vector(connections);
             WeightCache = new float[connections];
             Derivates = new float[connections];
             BiasCache = 0;
@@ -35,12 +35,12 @@ namespace vNet
             ConnectionPattern = null;
         }
 
-        public Neuron(int[] connectionPattern, float initVal)
+        public Neuron(int[] connectionPattern)
         {
             Z = 0;
             A = 0;
             Bias = 0.5f;
-            Weights = Utils.Generate_Vector(connectionPattern.Length, number: initVal);
+            Weights = Utils.Generate_Vector(connectionPattern.Length);
             WeightCache = new float[connectionPattern.Length];
             Derivates = new float[connectionPattern.Length];
             BiasCache = 0;

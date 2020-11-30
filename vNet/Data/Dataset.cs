@@ -21,8 +21,8 @@ namespace vNet
             classCount = TrainingData[0].TruthLabel.Length;
             connectionMask = null;
 
-            Shuffle(TrainingData);
-            DevSet = TrainingData.Take((TrainingData.Length / 100) * 10).ToArray();
+            //Shuffle(TrainingData);
+            //DevSet = TrainingData.Take((TrainingData.Length / 100) * 10).ToArray();
 
             if (reduceTo > 0)
             {

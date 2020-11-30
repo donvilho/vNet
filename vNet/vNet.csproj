@@ -75,27 +75,19 @@
     <Compile Include="Activations\Softmax.cs" />
     <Compile Include="Data\Dataset.cs" />
     <Compile Include="Data\Input.cs" />
-    <Compile Include="Layer\Layer.cs" />
     <Compile Include="LossFunctions\CrossEntropy.cs" />
     <Compile Include="LossFunctions\Loss.cs" />
-    <Compile Include="LossFunctions\MSA.cs" />
     <Compile Include="LossFunctions\MSE.cs" />
     <Compile Include="Models\LogisticRegression.cs" />
-    <Compile Include="Models\Model.cs" />
-    <Compile Include="Network.cs" />
-    <Compile Include="NetworkTrainer.cs" />
     <Compile Include="Neuron.cs" />
     <Compile Include="Plot.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Trainer\Trainer.cs" />
-    <Compile Include="TrainingSetup.cs" />
     <Compile Include="Utils.cs" />
-    <Compile Include="ValidationInput.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="ClassDiagram1.cd" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup />

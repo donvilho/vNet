@@ -8,7 +8,9 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Security.AccessControl;
 using System.Security.Cryptography;
+using System.Security.Principal;
 using System.Threading.Tasks;
 
 namespace vNet
@@ -254,7 +256,7 @@ namespace vNet
             return (DataMatrix, TruthMatrix);
         }
 
-        public static Input[] DataArrayCreator(string path, int Scale_factor = 1, bool save = false)
+        public static Input[] DataArrayCreator(string path)
         {
             Console.WriteLine("Creating dataset from files.. please wait, this may take few seconds");
 
@@ -273,12 +275,12 @@ namespace vNet
                     if (labels.Length <= 2)
                     {
                         var truthLabel = i;
-                        Dataset.Add(new Input(ImageToArray(img, Scale_factor, save), truthLabel, labelName));
+                        Dataset.Add(new Input(ImageToArray(img), truthLabel, labelName));
                     }
                     else
                     {
                         var truthLabel = LabelVectorCreator(labels.Length, i);
-                        Dataset.Add(new Input(ImageToArray(img, Scale_factor, save), truthLabel, labelName, img));
+                        Dataset.Add(new Input(ImageToArray(img), truthLabel, labelName, img));
                     }
                 });
             }
@@ -396,7 +398,7 @@ namespace vNet
             return value;
         }
 
-        public static float[] Generate_Vector(int size, double min = 0.001, double max = 1, float number = 0)
+        public static float[] Generate_Vector(int size, double min = 0.001, double max = 0.1, float number = 0)
         {
             /// super randomizer
             /// järkyttävä overkill mutta olkoot
@@ -425,7 +427,7 @@ namespace vNet
                 }
                 else
                 {
-                    Result[i] = Convert.ToSingle((rand.NextDouble() * max) - (min));
+                    Result[i] = Convert.ToSingle((rand.NextDouble()));
                 }
             }
             random.Dispose();
@@ -496,25 +498,87 @@ namespace vNet
             return newInput;
         }
 
-        public static float[] ImageToArray(string path, int scale = 1, bool save = false)
+        public static void ResizeImageFolders(string[] path, int x, int y)
+        {
+            var newRootDir = "";
+            var newSubDir = "";
+
+            if (!Directory.Exists(Directory.GetParent(path[0]).FullName + "\\Resized"))
+            {
+                newRootDir = Directory.GetParent(path[0]).FullName + "\\Resized";
+                Directory.CreateDirectory(newRootDir);
+                DirectoryInfo dInfo = new DirectoryInfo(newRootDir);
+                DirectorySecurity dSecurity = dInfo.GetAccessControl();
+                dSecurity.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, InheritanceFlags.ObjectInherit | InheritanceFlags.ContainerInherit, PropagationFlags.NoPropagateInherit, AccessControlType.Allow));
+                dInfo.SetAccessControl(dSecurity);
+            }
+            else
+            {
+                Directory.Delete(Directory.GetParent(path[0]).FullName + "\\Resized", true);
+                newRootDir = Directory.GetParent(path[0]).FullName + "\\Resized";
+                Directory.CreateDirectory(newRootDir);
+                DirectoryInfo dInfo = new DirectoryInfo(newRootDir);
+                DirectorySecurity dSecurity = dInfo.GetAccessControl();
+                dSecurity.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, InheritanceFlags.ObjectInherit | InheritanceFlags.ContainerInherit, PropagationFlags.NoPropagateInherit, AccessControlType.Allow));
+                dInfo.SetAccessControl(dSecurity);
+            }
+
+            for (int i = 0; i < path.Length; i++)
+            {
+                if (!Directory.Exists(newRootDir + "\\" + Path.GetFileName(path[i])))
+                {
+                    newSubDir = newRootDir + "\\" + Path.GetFileName(path[i]);
+                    Directory.CreateDirectory(newSubDir);
+                    /*
+                    DirectoryInfo dInfo = new DirectoryInfo(newSubDir);
+                    DirectorySecurity dSecurity = dInfo.GetAccessControl();
+                    dSecurity.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, InheritanceFlags.ObjectInherit | InheritanceFlags.ContainerInherit, PropagationFlags.NoPropagateInherit, AccessControlType.Allow));
+                    dInfo.SetAccessControl(dSecurity);
+                    */
+                }
+
+                var labels = Directory.GetDirectories(path[i]);
+
+                for (int j = 0; j < labels.Length; j++)
+                {
+                    var newFilePath = "";
+                    if (!Directory.Exists(newSubDir + "\\" + Path.GetFileName(labels[j])))
+                    {
+                        newSubDir = newRootDir + "\\" + Path.GetFileName(path[i]);
+                        newFilePath = newSubDir + "\\" + Path.GetFileName(labels[j]);
+                        Directory.CreateDirectory(newFilePath);
+                        /*
+                        DirectoryInfo dInfo = new DirectoryInfo(newFilePath);
+                        DirectorySecurity dSecurity = dInfo.GetAccessControl();
+                        dSecurity.AddAccessRule(new FileSystemAccessRule(new SecurityIdentifier(WellKnownSidType.WorldSid, null), FileSystemRights.FullControl, InheritanceFlags.ObjectInherit | InheritanceFlags.ContainerInherit, PropagationFlags.NoPropagateInherit, AccessControlType.Allow));
+                        dInfo.SetAccessControl(dSecurity);
+                        */
+                    }
+
+                    // Console.WriteLine(i);
+                    string[] files = Directory.GetFiles(labels[j]);
+
+                    Parallel.ForEach(files, (file) =>
+                    {
+                        Bitmap bm = (Bitmap)Image.FromFile(file);
+                        var fname = Path.GetFileName(file);
+                        var img = new Bitmap(bm, new Size(x, y));
+
+                        Console.WriteLine(fname);
+                        var newPath = newFilePath + "\\" + fname;
+                        img.Save(newPath);
+
+                        bm.Dispose();
+                        img.Dispose();
+                    });
+                }
+            }
+        }
+
+        public static float[] ImageToArray(string path)
         {
             Bitmap img = (Bitmap)Image.FromFile(path);
 
-            //Bitmap bm = (Bitmap)Image.FromFile(path);
-
-            //var fname = Path.GetFileName(path);
-
-            //var dir = Path.GetDirectoryName(path);
-
-            //var img = new Bitmap(bm, new Size(160, 120));
-
-            //var newPath = dir + "\\XSIZE_" + fname;
-            /*
-            if (save)
-            {
-                img.Save(newPath);
-            }
-            */
             float[] Result = new float[img.Height * img.Width];
 
             for (int i = 0; i <= img.Height - 1; i++)
@@ -525,7 +589,7 @@ namespace vNet
                     float color = (pixel.R + pixel.B + pixel.G) / 3;
 
                     //Result[img.Height * i + j] = color;
-                    Result[img.Height * i + j] = color / 254;
+                    Result[img.Height * i + j] = color / 255;
                 }
             }
 

@@ -33,8 +33,6 @@ namespace vNet
         public Trainer(string path)
         {
             Data = Utils.DatasetFromBinary(path);
-
-            //Console.WriteLine("new trainer");
             Classes = Data.classCount;
             Neurons = new Neuron[Classes];
             Output = new float[Classes];
@@ -47,14 +45,14 @@ namespace vNet
                 Mask = Data.connectionMask;
                 for (int i = 0; i < Neurons.Length; i++)
                 {
-                    Neurons[i] = new Neuron(Data.connectionMask, 0);
+                    Neurons[i] = new Neuron(Data.connectionMask);
                 }
             }
             else
             {
                 for (int i = 0; i < Neurons.Length; i++)
                 {
-                    Neurons[i] = new Neuron(Data.InputLenght, 0);
+                    Neurons[i] = new Neuron(Data.InputLenght);
                 }
             }
 
@@ -66,7 +64,7 @@ namespace vNet
             else
             {
                 activation = new Sigmoid();
-                loss = new CrossEntropy();
+                loss = new MSE();
             }
         }
 
@@ -141,7 +139,6 @@ namespace vNet
             int StepDecayCounter = 0;
             var epochTimer = new Stopwatch();
             var totalTimer = new Stopwatch();
-
             var avgTime = 0f;
 
             totalTimer.Start();
@@ -153,6 +150,7 @@ namespace vNet
 
                 var trainingAccuracy = 0f;
                 var result = TestModel(Data);
+
                 //Training loop
                 foreach (var input in dataset)
                 {
@@ -164,7 +162,9 @@ namespace vNet
                     //prediction
                     var Output = activation.Activate(Neurons);
 
-                    trainingAccuracy += Output.ToList().IndexOf(Output.Max()) == input.TruthLabel.ToList().IndexOf(input.TruthLabel.Max()) ? 1 : 0;
+                    //trainingAccuracy += Output.ToList().IndexOf(Output.Max()) == input.TruthLabel.ToList().IndexOf(input.TruthLabel.Max()) ? 1 : 0;
+
+                    trainingAccuracy += activation.Compare(Output, input.TruthLabel);
 
                     for (int i = 0; i < Neurons.Length; i++)
                     {
@@ -185,6 +185,7 @@ namespace vNet
                     }
                 }
 
+                /*
                 if (BatchCount > 0)
                 {
                     for (int i = 0; i < Neurons.Length; i++)
@@ -193,7 +194,7 @@ namespace vNet
                     }
                     BatchCount = 0;
                 }
-
+                */
                 PlotData[e, 2] = trainingAccuracy / (dataset.Length - 1);
                 PlotData[e, 0] = result.Item1;
                 PlotData[e, 1] = result.Item2;
@@ -203,8 +204,8 @@ namespace vNet
 
                 if (print)
                 {
-                    Console.WriteLine("E: " + e + " Loss: " + result.Item1 + " Test acc: " + result.Item2);
-                    //Console.WriteLine("E: " + e + " Loss: " + result.Item1 + " Test acc: " + result.Item2 + " Training acc: " + Math.Round(PlotData[e, 2], 3));
+                    //Console.WriteLine("E:" + e + " Loss: " + result.Item1 + " Accuracy: " + result.Item2);
+                    Console.WriteLine("E:" + e + " -- Loss: " + result.Item1 + " -- Training Accuracy: " + Math.Round(PlotData[e, 2], 3) + " -- Validation Accuracy: " + result.Item2);
                 }
 
                 if (BestLoss == 0)
@@ -221,12 +222,13 @@ namespace vNet
                     HighestResult = result.Item2;
                     HighestEpoch = e;
                 }
+                /*
                 else if (HighestResult - result.Item2 > 0.05)
                 {
                     return;
                     //return (PlotData, HighestEpoch, initLr, Batch, 0f, L2, Momentum);
                 }
-
+                */
                 StepDecayCounter++;
 
                 if (StepDecay > 0 & StepDecayCounter == StepDecay)
@@ -357,10 +359,14 @@ namespace vNet
                 Loss += loss.Calculate(Output, input.TruthLabel);
 
                 // Convert output
+                /*
                 int position = Output.ToList().IndexOf(Output.Max());
                 var yPos = input.TruthLabel.ToList().IndexOf(input.TruthLabel.Max());
 
                 Accuracy += position == yPos ? 1 : 0;
+                */
+
+                Accuracy += activation.Compare(Output, input.TruthLabel);
             }
 
             Accuracy = (float)Math.Round(Accuracy / Data.ValidationData.Length, 3);

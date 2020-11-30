@@ -34,12 +34,14 @@ namespace vNet
 
         public void TrainModel(string path, int epoch, float learningRate, bool l2, int stepDecay, float momentum, int miniBatch)
         {
-            Console.WriteLine("-----Starting training-----\n" +
-                "<-Parameters->\n" +
+            Console.WriteLine(
+                "-----Starting training-----\n" +
+                "<Parameters>\n" +
                 "Epoch: {0}\n" +
                 "Batchsize: {2}\n" +
                 "Learningrate: {1}\n" +
-                "Momentum: {3}\n",
+                "Momentum: {3}\n" +
+                "---------------------------",
                 epoch, learningRate, miniBatch, momentum);
 
             var trainer = new Trainer(path);

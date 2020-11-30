@@ -21,7 +21,7 @@ namespace vNet.Activations
 
         public override float Activate(float n)
         {
-            throw new NotImplementedException();
+            return Utils.SigmoidNormal(n);
         }
 
         public override float[] Activate(Neuron[] n)
@@ -34,6 +34,16 @@ namespace vNet.Activations
             }
 
             return res;
+        }
+
+        public override int Compare(float[] n, float[] t)
+        {
+            for (int i = 0; i < n.Length; i++)
+            {
+                n[i] = (float)Math.Round(n[i]);
+            }
+
+            return n.SequenceEqual(t) ? 1 : 0;
         }
 
         public override float Derivate(float n, float t)

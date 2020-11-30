@@ -15,5 +15,7 @@ namespace vNet
         public abstract float[] Activate(Neuron[] n);
 
         public abstract float Derivate(float n, float t);
+
+        public abstract int Compare(float[] n, float[] t);
     }
 }
