@@ -32,7 +32,7 @@ namespace vNet
             Process.Start(path);
         }
 
-        public void TrainModel(string path, int epoch, float learningRate, bool l2, int stepDecay, float momentum, int miniBatch)
+        public void TrainModel(string path, int epoch, double learningRate, bool l2, int stepDecay, double momentum, int miniBatch)
         {
             Console.WriteLine(
                 "-----Starting training-----\n" +
@@ -62,10 +62,10 @@ namespace vNet
         public void MultiTraining(string path)
         {
             var l2 = new bool[] { false };
-            var lrs = new float[] { 0.01f, };
+            var lrs = new double[] { 0.01f, };
             var bts = new int[] { 16, 32, 64, 128 };
             var epochs = new int[] { 50 };
-            var moms = new float[] { 0f };
+            var moms = new double[] { 0f };
             var decay = new int[] { 50 };
 
             var Models = new List<Trainer>();
@@ -102,7 +102,7 @@ namespace vNet
                 model.Train(false, false);
             });
 
-            var Results = new List<(float, double[,], float, float, int, int, bool)>();
+            var Results = new List<(double, double[,], double, double, int, int, bool)>();
 
             Models.ToList().ForEach(x => Results.Add(x.GetResult()));
 

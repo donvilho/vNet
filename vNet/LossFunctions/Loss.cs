@@ -8,6 +8,6 @@ namespace vNet
 {
     public abstract class Loss
     {
-        public abstract float Calculate(float[] n, float[] t);
+        public abstract double Calculate(double[] n, double[] t);
     }
 }

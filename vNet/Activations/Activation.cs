@@ -8,14 +8,14 @@ namespace vNet
 {
     public abstract class Activation
     {
-        public abstract float Activate(float n);
+        public abstract double Activate(double n);
 
-        public abstract float[] Activate(float[] n);
+        public abstract double[] Activate(double[] n);
 
-        public abstract float[] Activate(Neuron[] n);
+        public abstract double[] Activate(Neuron[] n);
 
-        public abstract float Derivate(float n, float t);
+        public abstract double Derivate(double n, double t);
 
-        public abstract int Compare(float[] n, float[] t);
+        public abstract int Compare(double[] n, double[] t);
     }
 }

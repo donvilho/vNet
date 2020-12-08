@@ -8,7 +8,7 @@ namespace vNet.LossFunctions
 {
     internal class CrossEntropy : Loss
     {
-        public override float Calculate(float[] n, float[] t)
+        public override double Calculate(double[] n, double[] t)
         {
             var loss = 0d;
             for (int i = 0; i < n.Length; i++)
@@ -16,8 +16,8 @@ namespace vNet.LossFunctions
                 loss += t[i] * Math.Log(n[i]) - ((1 - t[i]) * Math.Log(1 - n[i]));
             }
 
-            //return (float)-loss / n.Length;
-            return (float)-loss / n.Length;
+            //return (double)-loss / n.Length;
+            return (double)-loss / n.Length;
         }
     }
 }

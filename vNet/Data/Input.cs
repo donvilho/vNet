@@ -5,12 +5,12 @@ namespace vNet
     [Serializable]
     public struct Input
     {
-        public float[] TruthLabel { get; set; }
-        public float[] Data { get; set; }
+        public double[] TruthLabel { get; set; }
+        public double[] Data { get; set; }
         public string LabelName { get; set; }
         public string Path { get; set; }
 
-        public Input(float[] data, float[] y, string labelname, string path)
+        public Input(double[] data, double[] y, string labelname, string path)
         {
             TruthLabel = y;
             LabelName = labelname;
@@ -18,7 +18,7 @@ namespace vNet
             Path = path;
         }
 
-        public Input(float[] data, float[] y)
+        public Input(double[] data, double[] y)
         {
             TruthLabel = y;
             Data = data;
@@ -26,17 +26,17 @@ namespace vNet
             Path = null;
         }
 
-        public Input(float[] data, float y, string labelname)
+        public Input(double[] data, double y, string labelname)
         {
-            TruthLabel = new float[] { y };
+            TruthLabel = new double[] { y };
             Data = data;
             LabelName = labelname;
             Path = null;
         }
 
-        public Input(float[] data, float y)
+        public Input(double[] data, double y)
         {
-            TruthLabel = new float[] { y };
+            TruthLabel = new double[] { y };
             Data = data;
             LabelName = null;
             Path = null;

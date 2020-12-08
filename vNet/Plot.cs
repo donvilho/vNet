@@ -12,7 +12,7 @@ namespace vNet
         /// Method for plotting data to .png
         /// </summary>
         /// <param name="dataPoints"></param>
-        public static void Graph(double[,] dataPoints, float lr, int mb, int highest)
+        public static void Graph(double[,] dataPoints, double lr, int mb, int highest)
         {
             double[] DataError = new double[dataPoints.GetUpperBound(0) + 1];
             double[] DataAccuracy = new double[dataPoints.GetUpperBound(0) + 1];
@@ -58,7 +58,7 @@ namespace vNet
             //Process.Start(new ProcessStartInfo("NN_Time_plot_lr_" + lr.ToString() + "_batchsize_" + mb.ToString() + ".png") { UseShellExecute = true });
         }
 
-        public static void GraphList(List<(float, double[,], float, float, int, int, bool)> dataPoints)
+        public static void GraphList(List<(double, double[,], double, double, int, int, bool)> dataPoints)
         {
             var plt = new ScottPlot.Plot(800, 600);
 

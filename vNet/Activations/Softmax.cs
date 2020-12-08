@@ -8,7 +8,7 @@ namespace vNet.Activations
 {
     internal class Softmax : Activation
     {
-        public override float[] Activate(float[] Neurons)
+        public override double[] Activate(double[] Neurons)
         {
             var ExpSum = Neurons.Sum();
 
@@ -20,20 +20,20 @@ namespace vNet.Activations
             return Neurons;
         }
 
-        public override float Activate(float n)
+        public override double Activate(double n)
         {
             throw new NotImplementedException();
         }
 
-        public override float[] Activate(Neuron[] n)
+        public override double[] Activate(Neuron[] n)
         {
-            var result = new float[n.Length];
+            var result = new double[n.Length];
 
-            var expSum = 0f;
+            var expSum = 0d;
 
             for (int i = 0; i < n.Length; i++)
             {
-                n[i].A = (float)Utils.exp4(n[i].Z);
+                n[i].A = (double)Math.Exp(n[i].Z);
                 expSum += n[i].A;
             }
 
@@ -45,14 +45,13 @@ namespace vNet.Activations
             return result;
         }
 
-        public override int Compare(float[] n, float[] t)
+        public override int Compare(double[] n, double[] t)
         {
             return (n.ToList().IndexOf(n.Max()) == t.ToList().IndexOf(t.Max()) ? 1 : 0);
         }
 
-        public override float Derivate(float n, float t)
+        public override double Derivate(double n, double t)
         {
-            /*
             if (t == 1)
             {
                 return n - 1;
@@ -61,9 +60,8 @@ namespace vNet.Activations
             {
                 return n;
             }
-            */
 
-            return n - t;
+            //return n - t;
         }
     }
 }

@@ -9,7 +9,7 @@ namespace vNet.Activations
 {
     internal class Sigmoid : Activation
     {
-        public override float[] Activate(float[] Neurons)
+        public override double[] Activate(double[] Neurons)
         {
             for (int i = 0; i < Neurons.Length; i++)
             {
@@ -19,14 +19,14 @@ namespace vNet.Activations
             return Neurons;
         }
 
-        public override float Activate(float n)
+        public override double Activate(double n)
         {
             return Utils.SigmoidNormal(n);
         }
 
-        public override float[] Activate(Neuron[] n)
+        public override double[] Activate(Neuron[] n)
         {
-            var res = new float[n.Length];
+            var res = new double[n.Length];
 
             for (int i = 0; i < n.Length; i++)
             {
@@ -36,17 +36,17 @@ namespace vNet.Activations
             return res;
         }
 
-        public override int Compare(float[] n, float[] t)
+        public override int Compare(double[] n, double[] t)
         {
             for (int i = 0; i < n.Length; i++)
             {
-                n[i] = (float)Math.Round(n[i]);
+                n[i] = (double)Math.Round(n[i]);
             }
 
             return n.SequenceEqual(t) ? 1 : 0;
         }
 
-        public override float Derivate(float n, float t)
+        public override double Derivate(double n, double t)
         {
             return Utils.SigmoidNormalDerivate(n) * (n - t);
         }

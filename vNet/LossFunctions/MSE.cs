@@ -8,9 +8,9 @@ namespace vNet.LossFunctions
 {
     internal class MSE : Loss
     {
-        public override float Calculate(float[] n, float[] t)
+        public override double Calculate(double[] n, double[] t)
         {
-            var result = 0f;
+            var result = 0d;
             for (int i = 0; i < n.Length; i++)
             {
                 result += n[i] - t[i];

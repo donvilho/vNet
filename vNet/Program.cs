@@ -13,19 +13,18 @@ namespace vNet
         {
             var Model = new LogisticRegression();
 
-            //Model.MultiTraining("MnistFull.bin");
-
             Model.TrainModel(
-               path: "xray.bin",
-               epoch: 400,
-               learningRate: 0.001f,
+               path: "MnistDouble.bin",
+               epoch: 40,
+               learningRate: 0.1d,
                stepDecay: 0,
                momentum: 0.0f,
-               miniBatch: 10,
-               l2: true);
+               miniBatch: 0,
+               l2: false);
 
             //Model.RunModel(@"C:\Users\ville\Downloads\mnist_png.tar\mnist_png\c");
 
+            Console.ReadKey();
             Console.ReadKey();
         }
     }

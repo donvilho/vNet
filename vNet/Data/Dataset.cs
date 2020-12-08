@@ -33,8 +33,8 @@ namespace vNet
         public Dataset(Input[] dataset)
         {
             Shuffle(dataset);
-            ValidationData = dataset.Take((int)((float)dataset.Length * 0.2f)).ToArray();
-            TrainingData = dataset.Skip((int)((float)dataset.Length * 0.2f)).ToArray();
+            ValidationData = dataset.Take((int)((double)dataset.Length * 0.2f)).ToArray();
+            TrainingData = dataset.Skip((int)((double)dataset.Length * 0.2f)).ToArray();
             InputLenght = TrainingData[0].Data.Length;
             Normalize_Datasets();
         }
@@ -101,7 +101,7 @@ namespace vNet
         {
             for (int i = 0; i < TrainingData.Length; i++)
             {
-                var newInput = new float[mask.Length];
+                var newInput = new double[mask.Length];
                 for (int j = 0; j < mask.Length; j++)
                 {
                     newInput[j] = TrainingData[i].Data[mask[j]];
@@ -111,7 +111,7 @@ namespace vNet
 
             for (int i = 0; i < ValidationData.Length; i++)
             {
-                var newInput = new float[mask.Length];
+                var newInput = new double[mask.Length];
                 for (int j = 0; j < mask.Length; j++)
                 {
                     newInput[j] = ValidationData[i].Data[mask[j]];
@@ -121,7 +121,7 @@ namespace vNet
 
             for (int i = 0; i < DevSet.Length; i++)
             {
-                var newInput = new float[mask.Length];
+                var newInput = new double[mask.Length];
                 for (int j = 0; j < mask.Length; j++)
                 {
                     newInput[j] = DevSet[i].Data[mask[j]];

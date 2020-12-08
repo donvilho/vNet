@@ -29,7 +29,7 @@ namespace vNet
                 if (DropoutLowerThreshold != 0 | DropoutUpperThreshold != 0)
                 {
                     var temp = new List<int>();
-                    var interMidLayer = new float[dataset.InputLenght];
+                    var interMidLayer = new double[dataset.InputLenght];
 
                     for (int i = 0; i < dataset.TrainingData.Length; i++)
                     {
@@ -66,6 +66,13 @@ namespace vNet
             }
         }
 
+        public static void ColoredConsoleWrite(ConsoleColor firstColor, string firstText)
+        {
+            Console.ForegroundColor = firstColor;
+            Console.Write(firstText);
+            Console.ResetColor();
+        }
+
         public static void DatasetToBinary(Dataset dataset, string datasetName)
         {
             try
@@ -81,47 +88,47 @@ namespace vNet
             }
         }
 
-        public static float NumericSigmoid(double x)
+        public static double NumericSigmoid(double x)
         {
-            return (float)(1 / (1 + Math.Pow(0.3678749025, x)));
+            return (double)(1 / (1 + Math.Pow(0.3678749025, x)));
         }
 
-        public static float SigmoidNormalDerivate(float x)
+        public static double SigmoidNormalDerivate(double x)
         {
-            return (float)(1 / (1 + Utils.exp1(-x)) * (1 - (1 / (1 + Utils.exp1(-x)))));
+            return (double)(1 / (1 + Utils.exp1(-x)) * (1 - (1 / (1 + Utils.exp1(-x)))));
         }
 
-        public static float SigmoidSuperDerivate(float x)
+        public static double SigmoidSuperDerivate(double x)
         {
             var r = (2 + 2 * (Math.Abs(x)));
 
-            return (float)(2 / (r * r));
+            return (double)(2 / (r * r));
         }
 
-        public static float SigmoidSuper(float x)
+        public static double SigmoidSuper(double x)
         {
-            return (float)(x / (2 + 2 * Math.Abs(x)) + 0.5);
+            return (double)(x / (2 + 2 * Math.Abs(x)) + 0.5);
         }
 
-        public static float SigmoidNormal(float A)
+        public static double SigmoidNormal(double A)
         {
-            return (float)(1 / (1 + Math.Exp(-A)));
+            return (double)(1 / (1 + Math.Exp(-A)));
         }
 
-        public static float SigmoidFast(double value)
+        public static double SigmoidFast(double value)
         {
-            float k = (float)Math.Exp(value);
+            double k = (double)Math.Exp(value);
             return k / (1.0f + k);
         }
 
-        public static float SimdVectorProd(float[] left, float right)
+        public static double SimdVectorProd(double[] left, double right)
         {
-            var offset = Vector<float>.Count;
-            float[] result = new float[left.Length];
+            var offset = Vector<double>.Count;
+            double[] result = new double[left.Length];
             int i = 0;
             for (i = 0; i < left.Length; i += offset)
             {
-                var v1 = new Vector<float>(left, i);
+                var v1 = new Vector<double>(left, i);
                 (v1 * right).CopyTo(result, i);
             }
 
@@ -169,7 +176,7 @@ namespace vNet
             return (362880 + x * (362880 + x * (181440 + x * (60480 + x * (15120 + x * (3024 + x * (504 + x * (72 + x * (9 + x))))))))) * 2.75573192e-6;
         }
 
-        public static void ShuffleDataMatrix((float[,], int[,]) Data)
+        public static void ShuffleDataMatrix((double[,], int[,]) Data)
         {
             var rand = new Random();
             for (int i = Data.Item1.GetLength(0) - 1; i > 1; i--)
@@ -185,7 +192,7 @@ namespace vNet
             }
         }
 
-        public static (float[,], int[,]) CreateDataMatrix(string path, int ReduceSizeTo = 100)
+        public static (double[,], int[,]) CreateDataMatrix(string path, int ReduceSizeTo = 100)
         {
             Console.WriteLine("Creating dataset from files.. please wait, this may take few seconds");
 
@@ -212,7 +219,7 @@ namespace vNet
                 allFiles = temp.ToArray();
             }
 
-            var DataMatrix = new float[allFiles.Length, (imageSize.Width * imageSize.Height)];
+            var DataMatrix = new double[allFiles.Length, (imageSize.Width * imageSize.Height)];
             var TruthMatrix = new int[allFiles.Length, labels.Length];
 
             Parallel.For(0, DataMatrix.GetLength(0), i =>
@@ -277,13 +284,13 @@ namespace vNet
             for (int i = 1; i < lines.Length; i++)
             {
                 var line = lines[i].Split(',');
-                var temp = new float[line.Length];
+                var temp = new double[line.Length];
 
                 for (int j = 0; j < line.Length; j++)
                 {
-                    temp[j] = float.Parse(line[j], CultureInfo.InvariantCulture.NumberFormat);
+                    temp[j] = double.Parse(line[j], CultureInfo.InvariantCulture.NumberFormat);
                 }
-                var data = new float[] { temp[1], temp[2] };
+                var data = new double[] { temp[1], temp[2] };
 
                 result.Add(new Input(data, temp[3]));
             }
@@ -291,9 +298,9 @@ namespace vNet
             return result;
         }
 
-        public static float Dot(float[] a, float[] b)
+        public static double Dot(double[] a, double[] b)
         {
-            var temp = 0f;
+            var temp = 0d;
             for (int i = 0; i < b.Length; i++)
             {
                 temp += a[i] * b[i];
@@ -301,9 +308,9 @@ namespace vNet
             return temp;
         }
 
-        public static float[] Dot(float[,] a, float[] b)
+        public static double[] Dot(double[,] a, double[] b)
         {
-            var temp = new float[a.GetLength(0)];
+            var temp = new double[a.GetLength(0)];
 
             for (int i = 0; i < a.GetLength(0); i++)
             {
@@ -316,9 +323,9 @@ namespace vNet
             return temp;
         }
 
-        public static float[] Multiply2(float[] a, float[] b)
+        public static double[] Multiply2(double[] a, double[] b)
         {
-            var result = new float[a.Length * b.Length];
+            var result = new double[a.Length * b.Length];
             var c = 0;
             for (int i = 0; i < a.Length; i++)
             {
@@ -332,7 +339,7 @@ namespace vNet
             return result;
         }
 
-        public static float[] Multiply(float[] a, float[] b)
+        public static double[] Multiply(double[] a, double[] b)
         {
             var B = b.Sum();
 
@@ -344,7 +351,7 @@ namespace vNet
             return a;
         }
 
-        public static float[] VectorScalarMultiply(float[] A, float B)
+        public static double[] VectorScalarMultiply(double[] A, double B)
         {
             for (int i = 0; i < A.Length; i++)
             {
@@ -353,9 +360,9 @@ namespace vNet
             return A;
         }
 
-        public static float[] CalculateError(float[] NetOut, float[] Truth)
+        public static double[] CalculateError(double[] NetOut, double[] Truth)
         {
-            float[] Error = new float[NetOut.Length];
+            double[] Error = new double[NetOut.Length];
 
             if (NetOut.Length == Truth.Length)
             {
@@ -368,17 +375,17 @@ namespace vNet
             return Error;
         }
 
-        public static float[] Sigmoid_Derivate(float[] value)
+        public static double[] Sigmoid_Derivate(double[] value)
         {
             for (int i = 0; i < value.Length; i++)
             {
-                value[i] = (float)(1 / (1 + Math.Exp(-value[i])) * (1 - (1 / (1 + Math.Exp(-value[i])))));
+                value[i] = (double)(1 / (1 + Math.Exp(-value[i])) * (1 - (1 / (1 + Math.Exp(-value[i])))));
             }
 
             return value;
         }
 
-        public static float[] Generate_Vector(int size, double min = 0.001, double max = 0.1, float number = 0)
+        public static double[] Generate_Vector(int size, double min = -0.01, double max = 0.01, double number = 0)
         {
             /// super randomizer
             /// järkyttävä overkill mutta olkoot
@@ -397,7 +404,7 @@ namespace vNet
 
             Random rand = new Random(BitConverter.ToInt32(Bytes, 0) + BitConverter.ToInt32(Bytes1, 0) - BitConverter.ToInt32(Bytes2, 0));
 
-            float[] Result = new float[size];
+            var Result = new double[size];
 
             for (int i = 0; i < size; ++i)
             {
@@ -407,7 +414,7 @@ namespace vNet
                 }
                 else
                 {
-                    Result[i] = Convert.ToSingle((rand.NextDouble()));
+                    Result[i] = Convert.ToSingle((rand.NextDouble() * 2 - 1));
                 }
             }
             random.Dispose();
@@ -416,7 +423,7 @@ namespace vNet
             return Result;
         }
 
-        public static float[,] GenerateMatrix(int x, int y, double min = 0.1, double max = 0.9, bool incrementInt = false, bool setNumber = false, float number = 0)
+        public static double[,] GenerateMatrix(int x, int y, double min = 0.1, double max = 0.9, bool incrementInt = false, bool setNumber = false, double number = 0)
         {
             /// super randomizer
             /// järkyttävä overkill mutta olkoot
@@ -435,7 +442,7 @@ namespace vNet
 
             Random rand = new Random(BitConverter.ToInt32(Bytes, 0) + BitConverter.ToInt32(Bytes1, 0) - BitConverter.ToInt32(Bytes2, 0));
 
-            float[,] Result = new float[x, y];
+            double[,] Result = new double[x, y];
 
             int count = 0;
 
@@ -460,17 +467,17 @@ namespace vNet
             return Result;
         }
 
-        public static float[] LabelVectorCreator(int Size, int Pos)
+        public static double[] LabelVectorCreator(int Size, int Pos)
         {
-            var array = new float[Size];
+            var array = new double[Size];
             Array.Clear(array, 0, array.Length);
             array[Pos] = 1;
             return array;
         }
 
-        public static float[] ApplyConnectionMask(int[] mask, float[] input)
+        public static double[] ApplyConnectionMask(int[] mask, double[] input)
         {
-            var newInput = new float[mask.Length];
+            var newInput = new double[mask.Length];
             for (int j = 0; j < mask.Length; j++)
             {
                 newInput[j] = input[mask[j]];
@@ -555,18 +562,18 @@ namespace vNet
             }
         }
 
-        public static float[] ImageToArray(string path)
+        public static double[] ImageToArray(string path)
         {
             Bitmap img = (Bitmap)Image.FromFile(path);
 
-            float[] Result = new float[img.Height * img.Width];
+            var Result = new double[img.Height * img.Width];
 
             for (int i = 0; i <= img.Height - 1; i++)
             {
                 for (int j = 0; j <= img.Width - 1; j++)
                 {
                     Color pixel = img.GetPixel(j, i);
-                    float color = (pixel.R + pixel.B + pixel.G) / 3;
+                    double color = (pixel.R + pixel.B + pixel.G) / 3;
 
                     //Result[img.Height * i + j] = color;
                     Result[img.Height * i + j] = color / 255;
@@ -578,7 +585,7 @@ namespace vNet
             return Result;
         }
 
-        public static void DrawFromArray(float[] img)
+        public static void DrawFromArray(double[] img)
         {
             var len = (int)Math.Sqrt(img.Length);
 
