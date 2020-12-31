@@ -423,6 +423,56 @@ namespace vNet
             return Result;
         }
 
+        public static double[,] GenerateMatrix(int x, int y, int number, bool increment)
+        {
+            double[,] Result = new double[x, y];
+
+            for (int i = 0; i < x; ++i)
+            {
+                for (int j = 0; j < y; j++)
+                {
+                    if (!increment)
+                    {
+                        Result[i, j] = number--;
+                    }
+                    else
+                    {
+                        Result[i, j] = number++;
+                    }
+                }
+            }
+            return Result;
+        }
+
+        public static double[,] GenerateMatrix(int x, int y, int number)
+        {
+            double[,] Result = new double[x, y];
+
+            for (int i = 0; i < x; ++i)
+            {
+                for (int j = 0; j < y; j++)
+                {
+                    Result[i, j] = number;
+                }
+            }
+            return Result;
+        }
+
+        public static double[,] GenerateMatrix(int x, int y, int seed, double min = 0.1, double max = 0.9)
+        {
+            Random rand = new Random(seed);
+            double[,] Result = new double[x, y];
+
+            for (int i = 0; i < x; ++i)
+            {
+                for (int j = 0; j < y; j++)
+                {
+                    Result[i, j] = rand.NextDouble() * max - min;
+                }
+            }
+            return Result;
+        }
+
         public static double[,] GenerateMatrix(int x, int y, double min = 0.1, double max = 0.9, bool incrementInt = false, bool setNumber = false, double number = 0)
         {
             /// super randomizer
@@ -432,15 +482,7 @@ namespace vNet
             var Bytes = new byte[4];
             random.GetBytes(Bytes);
 
-            RNGCryptoServiceProvider random1 = new RNGCryptoServiceProvider();
-            var Bytes1 = new byte[4];
-            random1.GetBytes(Bytes1);
-
-            RNGCryptoServiceProvider random2 = new RNGCryptoServiceProvider();
-            var Bytes2 = new byte[4];
-            random2.GetBytes(Bytes2);
-
-            Random rand = new Random(BitConverter.ToInt32(Bytes, 0) + BitConverter.ToInt32(Bytes1, 0) - BitConverter.ToInt32(Bytes2, 0));
+            Random rand = new Random(BitConverter.ToInt32(Bytes, 0));
 
             double[,] Result = new double[x, y];
 
@@ -462,8 +504,34 @@ namespace vNet
                 }
             }
             random.Dispose();
-            random1.Dispose();
-            random2.Dispose();
+
+            return Result;
+        }
+
+        public static double[,,] InitKernels(int x, int y, int z, double min = 0.1, double max = 0.9)
+        {
+            /// super randomizer
+            /// järkyttävä overkill mutta olkoot
+
+            RNGCryptoServiceProvider random = new RNGCryptoServiceProvider();
+            var Bytes = new byte[4];
+            random.GetBytes(Bytes);
+
+            Random rand = new Random(BitConverter.ToInt32(Bytes, 0));
+
+            var Result = new double[x, y, z];
+
+            for (int k = 0; k < z; k++)
+            {
+                for (int i = 0; i < x; i++)
+                {
+                    for (int j = 0; j < y; j++)
+                    {
+                        Result[i, j, k] = rand.NextDouble() * max - min;
+                    }
+                }
+            }
+            random.Dispose();
             return Result;
         }
 
@@ -583,6 +651,20 @@ namespace vNet
             img.Dispose();
 
             return Result;
+        }
+
+        public static void DrawFromArray(double[,] img)
+        {
+            var len = Math.Sqrt(img.Length);
+
+            for (int i = 0; i < len; i++)
+            {
+                for (int j = 0; j < len; j++)
+                {
+                    Console.Write(img[i, j]);
+                }
+                Console.WriteLine();
+            }
         }
 
         public static void DrawFromArray(double[] img)
