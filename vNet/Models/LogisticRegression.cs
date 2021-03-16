@@ -15,9 +15,12 @@ namespace vNet
     {
         public Trainer NetModel;
 
-        public LogisticRegression()
+        public Dataset dataset;
+
+        public LogisticRegression(Dataset _dataset)
         {
             NetModel = null;
+            dataset = _dataset;
         }
 
         public void RunModel(string path)
@@ -32,7 +35,7 @@ namespace vNet
             Process.Start(path);
         }
 
-        public void TrainModel(string path, int epoch, double learningRate, bool l2, int stepDecay, double momentum, int miniBatch)
+        public void TrainModel(int epoch, double learningRate, bool l2, int stepDecay, double momentum, int miniBatch)
         {
             Console.WriteLine(
                 "-----Starting training-----\n" +
@@ -44,7 +47,7 @@ namespace vNet
                 "---------------------------",
                 epoch, learningRate, miniBatch, momentum);
 
-            var trainer = new Trainer(path);
+            var trainer = new Trainer(dataset);
             trainer.Init(learningRate, miniBatch, epoch, momentum, stepDecay, l2);
             //var result = trainer.Train(Data, epoch, learningRate, miniBatch, momentum, stepDecay, l2);
 
@@ -84,7 +87,7 @@ namespace vNet
                                 {
                                     //combinations.Add((lrs[i], bts[j], epochs[k], moms[l], l2[m]));
                                     //new Trainer(Data).Init(param.Item1, param.Item2, param.Item3, param.Item4, param.Item3, param.Item5);
-                                    var mdl = new Trainer(path);
+                                    var mdl = new Trainer(dataset);
                                     mdl.Init(lrs[i], bts[j], epochs[k], moms[l], decay[n], l2[m]);
                                     Models.Add(mdl);
                                 }

@@ -32,9 +32,10 @@ namespace vNet
 
         private Dataset Data;
 
-        public Trainer(string path)
+        public Trainer(Dataset _dataset)
         {
-            Data = Utils.DatasetFromBinary(path);
+            //Data = Utils.DatasetFromBinary(path);
+            Data = _dataset;
             Classes = Data.classCount;
             Neurons = new Neuron[Classes];
             Output = new double[Classes];
